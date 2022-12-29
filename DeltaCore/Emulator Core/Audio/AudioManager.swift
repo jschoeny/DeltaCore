@@ -376,14 +376,14 @@ private extension AudioManager
         else
         {
             let route = AVAudioSession.sharedInstance().currentRoute
-            if self.isMuted && (route.isHeadsetPluggedIn || !route.isOutputtingToExternalDevice)
+            if self.isMuted && !route.isOutputtingToExternalDevice
             {
-                // Mute if playing through speaker or headphones.
+                // Mute if playing through device speakers.
                 self.audioEngine.mainMixerNode.outputVolume = 0.0
             }
             else
             {
-                // Ignore mute switch for other audio routes (e.g. AirPlay).
+                // Ignore mute switch for other audio routes (e.g. AirPlay, headphones).
                 self.audioEngine.mainMixerNode.outputVolume = 1.0
             }
         }
