@@ -385,7 +385,7 @@ extension EmulatorCore: GameControllerReceiver
                 // This means we need to temporarily deactivate the input before activating it again.
                 self.reactivateInputsQueue.async {
                     
-                    self.deltaCore.emulatorBridge.deactivateInput(input.intValue!, at: playerIndex, at: playerIndex)
+                    self.deltaCore.emulatorBridge.deactivateInput(input.intValue!, at: playerIndex)
                     
                     self.reactivateInputsDispatchGroup = DispatchGroup()
                     
@@ -416,7 +416,7 @@ extension EmulatorCore: GameControllerReceiver
     public func gameController(_ gameController: GameController, didDeactivate input: Input)
     {
         guard let input = self.mappedInput(for: input), input.type == .game(self.gameType) else { return }
-        
+
         let playerIndex = gameController.playerIndex ?? 0
         
         self.deltaCore.emulatorBridge.deactivateInput(input.intValue!, at: playerIndex)
