@@ -89,6 +89,18 @@ public class AudioManager: NSObject, AudioRendering
         }
     }
     
+    public var overrideVolume: Float = 1.0 {
+        didSet {
+            self.updateOutputVolume()
+        }
+    }
+    
+    public var respectMuteSwitch: Bool = true {
+        didSet {
+            self.updateOutputVolume()
+        }
+    }
+    
     var frameDuration: Double = (1.0 / 60.0) {
         didSet {
             guard self.audioEngine.isRunning else { return }
@@ -376,7 +388,7 @@ private extension AudioManager
         else
         {
             let route = AVAudioSession.sharedInstance().currentRoute
-            if self.isMuted && !route.isOutputtingToExternalDevice
+            if self.respectMuteSwitch && self.isMuted && !route.isOutputtingToExternalDevice
             {
                 // Mute if playing through device speakers.
                 self.audioEngine.mainMixerNode.outputVolume = 0.0
@@ -384,7 +396,11 @@ private extension AudioManager
             else
             {
                 // Ignore mute switch for other audio routes (e.g. AirPlay, headphones).
-                self.audioEngine.mainMixerNode.outputVolume = 1.0
+                guard self.overrideVolume >= 0.0 && self.overrideVolume <= 1.0 else {
+                    self.audioEngine.mainMixerNode.outputVolume = 1.0
+                    return
+                }
+                self.audioEngine.mainMixerNode.outputVolume = self.overrideVolume
             }
         }
     }
