@@ -3,12 +3,12 @@ Pod::Spec.new do |spec|
   spec.version      = "0.1"
   spec.summary      = "iOS Emulator Plug-in Framework"
   spec.description  = "iOS framework that powers Delta emulator."
-  spec.homepage     = "https://github.com/rileytestut/DeltaCore"
+  spec.homepage     = "https://github.com/Lit-Development/DeltaCore"
   spec.platform     = :ios, "12.0"
-  spec.source       = { :git => "https://github.com/lonkelle/DeltaCore.git" }
+  spec.source       = { :git => "https://github.com/Lit-Development/DeltaCore.git" }
 
-  spec.author             = { "Riley Testut" => "riley@rileytestut.com" }
-  spec.social_media_url   = "https://twitter.com/rileytestut"
+  spec.author             = { "Chris Rittenhouse" => "dev@litritt.com" }
+  spec.social_media_url   = "https://twitter.com/lit_ritt"
   
   spec.source_files  = "DeltaCore/**/*.{h,m,swift}"
   spec.exclude_files = "DeltaCore/DeltaTypes.h", "DeltaCore/Emulator Core/Audio/DLTAMuteSwitchMonitor.h"
