@@ -65,7 +65,9 @@ public class VideoManager: NSObject, VideoRendering
     public init(videoFormat: VideoFormat)
     {
         self.videoFormat = videoFormat
-        self.context = EAGLContext.createWithBestAvailableAPI()
+        // TODO figure out why this isn't working
+        // self.context = EAGLContext.createWithBestAvailableAPI()
+        self.context = EAGLContext(api: .openGLES2)!
         self.ciContext = CIContext(eaglContext: self.context, options: [.workingColorSpace: NSNull()])
         
         switch videoFormat.format
