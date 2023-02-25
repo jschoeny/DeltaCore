@@ -33,4 +33,9 @@ public extension UIScreen
             }
         }
     }
+    
+    var previewSkinSize: ControllerSkin.Size
+    {
+        return .preview
+    }
 }

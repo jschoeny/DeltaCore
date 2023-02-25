@@ -99,4 +99,8 @@ extension TouchControllerSkin: ControllerSkinProtocol
     {
         return self.controllerSkin.aspectRatio(for: traits)
     }
+    
+    public func previewSize(for traits: ControllerSkin.Traits) -> CGSize? {
+        return self.controllerSkin.previewSize(for: traits)
+    }
 }

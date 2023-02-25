@@ -281,6 +281,13 @@ public extension ControllerSkin
             else if let image = self.image(for: representation, assetSize: AssetSize(size: .medium)) { returnedImage = image }
             else if let image = self.image(for: representation, assetSize: AssetSize(size: .small)) { returnedImage = image }
             
+        case .preview:
+            if let image = self.image(for: representation, assetSize: AssetSize(size: .preview)) { returnedImage = image }
+            else if let image = self.image(for: representation, assetSize: AssetSize(size: .large, resizable: true)) { returnedImage = image }
+            else if let image = self.image(for: representation, assetSize: AssetSize(size: .large)) { returnedImage = image }
+            else if let image = self.image(for: representation, assetSize: AssetSize(size: .medium)) { returnedImage = image }
+            else if let image = self.image(for: representation, assetSize: AssetSize(size: .small)) { returnedImage = image }
+            
         }
         
         if let image = returnedImage
@@ -320,6 +327,36 @@ public extension ControllerSkin
         guard let representation = self.representation(for: traits) else { return nil }
         return representation.aspectRatio
     }
+    
+    func previewSize(for traits: Traits) -> CGSize?
+    {
+        guard let representation = self.representation(for: traits) else { return nil }
+        
+        let cacheKey = self.cacheKey(for: traits, size: UIScreen.main.previewSkinSize)
+        
+        if let image = self.imageCache.object(forKey: cacheKey as NSString)
+        {
+            let size = CGSize(width: image.size.width ?? 300, height: image.size.height ?? 300)
+            return size
+        }
+        
+        var returnedImage: UIImage? = nil
+        
+        if let image = self.image(for: representation, assetSize: AssetSize(size: .preview)) { returnedImage = image }
+        else if let image = self.image(for: representation, assetSize: AssetSize(size: .large, resizable: true)) { returnedImage = image }
+        else if let image = self.image(for: representation, assetSize: AssetSize(size: .large)) { returnedImage = image }
+        else if let image = self.image(for: representation, assetSize: AssetSize(size: .medium)) { returnedImage = image }
+        else if let image = self.image(for: representation, assetSize: AssetSize(size: .small)) { returnedImage = image }
+        
+        if let image = returnedImage
+        {
+            self.imageCache.setObject(image, forKey: cacheKey as NSString)
+        }
+        
+        let size = CGSize(width: returnedImage?.size.width ?? 300, height: returnedImage?.size.height ?? 300)
+        
+        return size
+    }
 }
 
 private extension ControllerSkin
@@ -336,7 +373,7 @@ private extension ControllerSkin
             
             switch assetSize
             {
-            case .small, .medium, .large:
+            case .small, .medium, .large, .preview:
                 guard let imageScale = assetSize.imageScale(for: representation.traits) else { return nil }
                 image = UIImage(data: data, scale: imageScale)
                 
@@ -355,11 +392,6 @@ private extension ControllerSkin
         }
     }
     
-    func cacheKey(for traits: Traits, size: Size) -> String
-    {
-        return String(describing: traits) + "-" + String(describing: size)
-    }
-    
     func representation(for traits: Traits) -> Representation?
     {
         let representation = self.representations[traits]
@@ -373,6 +405,11 @@ private extension ControllerSkin
         
         let fallbackRepresentation = self.representations[fallbackTraits]
         return fallbackRepresentation
+    }
+    
+    func cacheKey(for traits: Traits, size: Size) -> String
+    {
+        return String(describing: traits) + "-" + String(describing: size)
     }
 }
 
@@ -593,6 +630,7 @@ private extension ControllerSkin
         case small
         case medium
         case large
+        case preview
         indirect case resizable(assetSize: AssetSize?)
         
         // If we're resizable, return our associated AssetSize
@@ -630,6 +668,7 @@ private extension ControllerSkin
             case .small:     return "small"
             case .medium:    return "medium"
             case .large:     return "large"
+            case .preview:   return "preview"
             case .resizable: return "resizable"
             }
         }
@@ -641,6 +680,7 @@ private extension ControllerSkin
             case "small":     self = .small
             case "medium":    self = .medium
             case "large":     self = .large
+            case "preview":   self = .preview
             case "resizable": self = .resizable(assetSize: nil)
             default:          return nil
             }
@@ -650,9 +690,10 @@ private extension ControllerSkin
         {
             switch size
             {
-            case .small:  self = .small
-            case .medium: self = .medium
-            case .large:  self = .large
+            case .small:   self = .small
+            case .medium:  self = .medium
+            case .large:   self = .large
+            case .preview: self = .preview
             }
             
             if resizable
@@ -682,6 +723,7 @@ private extension ControllerSkin
             case (.ipad, _, .large): targetSize = CGSize(width: 1024, height: 1366)
                 
             case (_, _, .resizable): return nil
+            case (_, _, .preview): return nil
             }
             
             switch traits.orientation
@@ -711,6 +753,7 @@ private extension ControllerSkin
             case (.ipad, .splitView, _): return 2.0
                 
             case (_, _, .resizable): return nil
+            case (_, _, .preview): return nil
             }
         }
     }

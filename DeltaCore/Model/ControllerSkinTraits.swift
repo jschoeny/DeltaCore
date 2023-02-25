@@ -35,6 +35,7 @@ extension ControllerSkin
         case small
         case medium
         case large
+        case preview
     }
     
     public struct Traits: Hashable, CustomStringConvertible
