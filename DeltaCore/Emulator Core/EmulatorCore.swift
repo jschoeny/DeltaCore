@@ -344,6 +344,8 @@ extension EmulatorCore: GameControllerReceiver
 {
     public func gameController(_ gameController: GameController, didActivate controllerInput: Input, value: Double)
     {
+        // Ignore controllers without assigned playerIndex.
+        guard let playerIndex = gameController.playerIndex else { return }
         self.gameControllers.add(gameController)
         
         guard let input = self.mappedInput(for: controllerInput), input.type == .game(self.gameType) else { return }
@@ -374,8 +376,6 @@ extension EmulatorCore: GameControllerReceiver
                 adjustedValue = nil
             }
         }
-
-        let playerIndex = gameController.playerIndex ?? 0
         
         if let adjustedValue
         {
@@ -415,9 +415,10 @@ extension EmulatorCore: GameControllerReceiver
     
     public func gameController(_ gameController: GameController, didDeactivate input: Input)
     {
+        // Ignore controllers without assigned playerIndex.
+        guard let playerIndex = gameController.playerIndex else { return }
+        
         guard let input = self.mappedInput(for: input), input.type == .game(self.gameType) else { return }
-
-        let playerIndex = gameController.playerIndex ?? 0
         
         self.deltaCore.emulatorBridge.deactivateInput(input.intValue!, at: playerIndex)
     }
