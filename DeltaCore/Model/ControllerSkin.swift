@@ -753,7 +753,7 @@ private extension ControllerSkin
             case (.ipad, .splitView, _): return 2.0
                 
             case (_, _, .resizable): return nil
-            case (_, _, .preview): return nil
+            case (_, _, .preview): return 2.0 // TODO: Write better case hnadling of previews, not just a catch-all
             }
         }
     }
