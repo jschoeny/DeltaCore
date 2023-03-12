@@ -73,7 +73,7 @@ public class ControllerView: UIView, GameController
         
         guard let controllerSkin = self.controllerSkin else { return traits }
         
-        guard let supportedTraits = controllerSkin.supportedTraits(for: traits) else { return traits }
+        guard let supportedTraits = controllerSkin.supportedTraits(for: traits, alt: self._useAltRepresentations) else { return traits }
         return supportedTraits
     }
 
@@ -96,6 +96,12 @@ public class ControllerView: UIView, GameController
     public var isThumbstickHapticFeedbackEnabled = true {
         didSet {
             self.thumbstickViews.values.forEach { $0.isHapticFeedbackEnabled = self.isThumbstickHapticFeedbackEnabled }
+        }
+    }
+    
+    public var isAltRepresentationsEnabled = true {
+        didSet {
+            self._useAltRepresentations = self.isAltRepresentationsEnabled
         }
     }
     
@@ -146,6 +152,7 @@ public class ControllerView: UIView, GameController
     
     private var _performedInitialLayout = false
     private var _delayedUpdatingControllerSkin = false
+    private var _useAltRepresentations = false
     
     private var controllerInputView: ControllerInputView?
     
@@ -235,7 +242,7 @@ public class ControllerView: UIView, GameController
         // updateControllerSkin() calls layoutSubviews(), so don't call again to avoid infinite loop.
         // self.updateControllerSkin()
         
-        guard let traits = self.controllerSkinTraits, let controllerSkin = self.controllerSkin, let items = controllerSkin.items(for: traits) else { return }
+        guard let traits = self.controllerSkinTraits, let controllerSkin = self.controllerSkin, let items = controllerSkin.items(for: traits, alt: self._useAltRepresentations) else { return }
         
         for item in items
         {
@@ -260,7 +267,7 @@ public class ControllerView: UIView, GameController
             }
         }
         
-        if let screens = controllerSkin.screens(for: traits)
+        if let screens = controllerSkin.screens(for: traits, alt: self._useAltRepresentations)
         {
             for screen in screens where screen.placement == .controller
             {
@@ -337,7 +344,7 @@ extension ControllerView
         }
         
         // Finally, only show keyboard controller if we're in Split View and the controller skin supports it.
-        let canBecomeFirstResponder = traits.displayType == .splitView && controllerSkin.supports(traits)
+        let canBecomeFirstResponder = traits.displayType == .splitView && controllerSkin.supports(traits, alt: self._useAltRepresentations)
         return canBecomeFirstResponder
     }
     
@@ -419,7 +426,7 @@ public extension ControllerView
         
         if let traits = self.controllerSkinTraits
         {
-            var items = self.controllerSkin?.items(for: traits)
+            var items = self.controllerSkin?.items(for: traits, alt: self._useAltRepresentations)
        
             if traits.displayType == .splitView
             {
@@ -455,7 +462,7 @@ public extension ControllerView
                     }
                     else
                     {
-                        image = controllerSkin.image(for: traits, preferredSize: self.controllerSkinSize)
+                        image = controllerSkin.image(for: traits, preferredSize: self.controllerSkinSize, alt: self._useAltRepresentations)
                     }
                     
                     if let image = image
@@ -476,7 +483,7 @@ public extension ControllerView
             self.buttonsView.items = items
             self.controllerDebugView.items = items
             
-            isTranslucent = self.controllerSkin?.isTranslucent(for: traits) ?? false
+            isTranslucent = self.controllerSkin?.isTranslucent(for: traits, alt: self._useAltRepresentations) ?? false
             
             var thumbstickViews = [ControllerSkin.Item.ID: ThumbstickInputView]()
             var previousThumbstickViews = self.thumbstickViews
@@ -507,7 +514,7 @@ public extension ControllerView
                         self?.updateThumbstickValues(item: item, xAxis: xAxis, yAxis: yAxis)
                     }
                     
-                    if let (image, size) = self.controllerSkin?.thumbstick(for: item, traits: traits, preferredSize: self.controllerSkinSize)
+                    if let (image, size) = self.controllerSkin?.thumbstick(for: item, traits: traits, preferredSize: self.controllerSkinSize, alt: self._useAltRepresentations)
                     {
                         let size = CGSize(width: size.width * self.bounds.width, height: size.height * self.bounds.height)
                         thumbstickView.thumbstickImage = image
@@ -603,7 +610,7 @@ public extension ControllerView
         
         if let controllerSkin = self.controllerSkin,
            let traits = self.controllerSkinTraits,
-           let screens = controllerSkin.screens(for: traits)
+           let screens = controllerSkin.screens(for: traits, alt: self._useAltRepresentations)
         {
             for screen in screens where screen.placement == .controller
             {
@@ -684,7 +691,7 @@ private extension ControllerView
             self.controllerInputView = inputControllerView
         }
 
-        if controllerSkin.supports(traits)
+        if controllerSkin.supports(traits, alt: self._useAltRepresentations)
         {
             self.controllerInputView?.controllerView.controllerSkin = controllerSkin
         }

@@ -37,26 +37,26 @@ public struct TouchControllerSkin
 
 extension TouchControllerSkin: ControllerSkinProtocol
 {
-    public func supports(_ traits: ControllerSkin.Traits) -> Bool
+    public func supports(_ traits: ControllerSkin.Traits, alt: Bool = false) -> Bool
     {
         return true
     }
     
-    public func image(for traits: ControllerSkin.Traits, preferredSize: ControllerSkin.Size) -> UIImage?
+    public func image(for traits: ControllerSkin.Traits, preferredSize: ControllerSkin.Size, alt: Bool = false) -> UIImage?
     {
         return nil
     }
     
-    public func thumbstick(for item: ControllerSkin.Item, traits: ControllerSkin.Traits, preferredSize: ControllerSkin.Size) -> (UIImage, CGSize)?
+    public func thumbstick(for item: ControllerSkin.Item, traits: ControllerSkin.Traits, preferredSize: ControllerSkin.Size, alt: Bool = false) -> (UIImage, CGSize)?
     {
         return nil
     }
     
-    public func items(for traits: ControllerSkin.Traits) -> [ControllerSkin.Item]?
+    public func items(for traits: ControllerSkin.Traits, alt: Bool = false) -> [ControllerSkin.Item]?
     {
         guard
-            var touchScreenItem = self.controllerSkin.items(for: traits)?.first(where: { $0.kind == .touchScreen }),
-            let screens = self.screens(for: traits), screens.count > 1,
+            var touchScreenItem = self.controllerSkin.items(for: traits, alt: alt)?.first(where: { $0.kind == .touchScreen }),
+            let screens = self.screens(for: traits, alt: alt), screens.count > 1,
             let outputFrame = screens[1].outputFrame
         else { return nil }
         
@@ -68,16 +68,16 @@ extension TouchControllerSkin: ControllerSkinProtocol
         return [touchScreenItem]
     }
     
-    public func isTranslucent(for traits: ControllerSkin.Traits) -> Bool?
+    public func isTranslucent(for traits: ControllerSkin.Traits, alt: Bool = false) -> Bool?
     {
         return false
     }
 
-    public func screens(for traits: ControllerSkin.Traits) -> [ControllerSkin.Screen]?
+    public func screens(for traits: ControllerSkin.Traits, alt: Bool = false) -> [ControllerSkin.Screen]?
     {
-        let screensCount = CGFloat(self.controllerSkin.screens(for: traits)?.count ?? 0)
+        let screensCount = CGFloat(self.controllerSkin.screens(for: traits, alt: alt)?.count ?? 0)
         
-        let screens = self.controllerSkin.screens(for: traits)?.enumerated().map { (index, screen) -> ControllerSkin.Screen in
+        let screens = self.controllerSkin.screens(for: traits, alt: alt)?.enumerated().map { (index, screen) -> ControllerSkin.Screen in
             let length = 1.0 / screensCount
             
             var screen = screen
@@ -95,12 +95,12 @@ extension TouchControllerSkin: ControllerSkinProtocol
         return screens
     }
     
-    public func aspectRatio(for traits: ControllerSkin.Traits) -> CGSize?
+    public func aspectRatio(for traits: ControllerSkin.Traits, alt: Bool = false) -> CGSize?
     {
-        return self.controllerSkin.aspectRatio(for: traits)
+        return self.controllerSkin.aspectRatio(for: traits, alt: alt)
     }
     
-    public func previewSize(for traits: ControllerSkin.Traits) -> CGSize? {
-        return self.controllerSkin.previewSize(for: traits)
+    public func previewSize(for traits: ControllerSkin.Traits, alt: Bool = false) -> CGSize? {
+        return self.controllerSkin.previewSize(for: traits, alt: alt)
     }
 }

@@ -68,6 +68,7 @@ public struct ControllerSkin: ControllerSkinProtocol
     public let fileURL: URL
     
     private let representations: [Traits: Representation]
+    private let altRepresentations: [Traits: Representation]
     private let imageCache = NSCache<NSString, UIImage>()
     
     private let archive: Archive
@@ -116,6 +117,17 @@ public struct ControllerSkin: ControllerSkinProtocol
             self.representations = representations
             
             guard self.representations.count > 0 else { return nil }
+            
+            let altRepresentationsDictionary = info["altRepresentations"] as? RepresentationDictionary ?? representationsDictionary
+            
+            let altRepresentationsSet = ControllerSkin.parsedRepresentations(from: altRepresentationsDictionary, skinID: identifier)
+            
+            var altRepresentations = [Traits: Representation]()
+            for altRepresentation in altRepresentationsSet
+            {
+                altRepresentations[altRepresentation.traits] = altRepresentation
+            }
+            self.altRepresentations = altRepresentations
         }
         catch let error as NSError
         {
@@ -189,15 +201,23 @@ public extension ControllerSkin
 
 public extension ControllerSkin
 {
-    func supports(_ traits: Traits) -> Bool
+    func supports(_ traits: Traits, alt: Bool = false) -> Bool
     {
-        let representation = self.representations[traits]
-        return representation != nil
+        if alt
+        {
+            let representation = self.altRepresentations[traits]
+            return representation != nil
+        }
+        else
+        {
+            let representation = self.representations[traits]
+            return representation != nil
+        }
     }
     
-    func thumbstick(for item: ControllerSkin.Item, traits: Traits, preferredSize: Size) -> (UIImage, CGSize)?
+    func thumbstick(for item: ControllerSkin.Item, traits: Traits, preferredSize: Size, alt: Bool = false) -> (UIImage, CGSize)?
     {
-        guard let representation = self.representation(for: traits) else { return nil }
+        guard let representation = self.representation(for: traits, alt: alt) else { return nil }
         guard let imageName = item.thumbstickImageName, let size = item.thumbstickSize else { return nil }
         guard let entry = self.archive[imageName] else { return nil }
         
@@ -241,9 +261,9 @@ public extension ControllerSkin
         return (image, size)
     }
     
-    func image(for traits: Traits, preferredSize: Size) -> UIImage?
+    func image(for traits: Traits, preferredSize: Size, alt: Bool = false) -> UIImage?
     {
-        guard let representation = self.representation(for: traits) else { return nil }
+        guard let representation = self.representation(for: traits, alt: alt) else { return nil }
         
         let cacheKey = self.cacheKey(for: traits, size: preferredSize)
         
@@ -298,39 +318,39 @@ public extension ControllerSkin
         return returnedImage
     }
     
-    func items(for traits: Traits) -> [Item]?
+    func items(for traits: Traits, alt: Bool = false) -> [Item]?
     {
-        guard let representation = self.representation(for: traits) else { return nil }
+        guard let representation = self.representation(for: traits, alt: alt) else { return nil }
         return representation.items
     }
     
-    func isTranslucent(for traits: Traits) -> Bool?
+    func isTranslucent(for traits: Traits, alt: Bool = false) -> Bool?
     {
-        guard let representation = self.representation(for: traits) else { return nil }
+        guard let representation = self.representation(for: traits, alt: alt) else { return nil }
         return representation.isTranslucent
     }
     
-    func gameScreenFrame(for traits: Traits) -> CGRect?
+    func gameScreenFrame(for traits: Traits, alt: Bool = false) -> CGRect?
     {
-        guard let representation = self.representation(for: traits) else { return nil }
+        guard let representation = self.representation(for: traits, alt: alt) else { return nil }
         return representation.screens?.first?.outputFrame
     }
     
-    func screens(for traits: Traits) -> [ControllerSkin.Screen]?
+    func screens(for traits: Traits, alt: Bool = false) -> [ControllerSkin.Screen]?
     {
-        guard let representation = self.representation(for: traits) else { return nil }
+        guard let representation = self.representation(for: traits, alt: alt) else { return nil }
         return representation.screens
     }
     
-    func aspectRatio(for traits: ControllerSkin.Traits) -> CGSize?
+    func aspectRatio(for traits: ControllerSkin.Traits, alt: Bool = false) -> CGSize?
     {
-        guard let representation = self.representation(for: traits) else { return nil }
+        guard let representation = self.representation(for: traits, alt: alt) else { return nil }
         return representation.aspectRatio
     }
     
-    func previewSize(for traits: Traits) -> CGSize?
+    func previewSize(for traits: Traits, alt: Bool = false) -> CGSize?
     {
-        guard let representation = self.representation(for: traits) else { return nil }
+        guard let representation = self.representation(for: traits, alt: alt) else { return nil }
         
         let cacheKey = self.cacheKey(for: traits, size: UIScreen.main.previewSkinSize)
         
@@ -392,18 +412,34 @@ private extension ControllerSkin
         }
     }
     
-    func representation(for traits: Traits) -> Representation?
+    func representation(for traits: Traits, alt: Bool = false) -> Representation?
     {
-        let representation = self.representations[traits]
+        let representation: Representation?
+        if alt
+        {
+            representation = self.altRepresentations[traits]
+        }
+        else
+        {
+            representation = self.representations[traits]
+        }
         guard representation == nil else {
             return representation
         }
         
-        guard let fallbackTraits = self.supportedTraits(for: traits) else {
+        guard let fallbackTraits = self.supportedTraits(for: traits, alt: alt) else {
             return nil
         }
         
-        let fallbackRepresentation = self.representations[fallbackTraits]
+        let fallbackRepresentation: Representation?
+        if alt
+        {
+            fallbackRepresentation = self.altRepresentations[traits]
+        }
+        else
+        {
+            fallbackRepresentation = self.representations[traits]
+        }
         return fallbackRepresentation
     }
     

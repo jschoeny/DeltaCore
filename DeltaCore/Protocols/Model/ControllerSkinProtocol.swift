@@ -15,32 +15,32 @@ public protocol ControllerSkinProtocol
     var gameType: GameType { get }
     var isDebugModeEnabled: Bool { get }
     
-    func supports(_ traits: ControllerSkin.Traits) -> Bool
+    func supports(_ traits: ControllerSkin.Traits, alt: Bool) -> Bool
     
-    func image(for traits: ControllerSkin.Traits, preferredSize: ControllerSkin.Size) -> UIImage?
-    func thumbstick(for item: ControllerSkin.Item, traits: ControllerSkin.Traits, preferredSize: ControllerSkin.Size) -> (UIImage, CGSize)?
+    func image(for traits: ControllerSkin.Traits, preferredSize: ControllerSkin.Size, alt: Bool) -> UIImage?
+    func thumbstick(for item: ControllerSkin.Item, traits: ControllerSkin.Traits, preferredSize: ControllerSkin.Size, alt: Bool) -> (UIImage, CGSize)?
     
-    func items(for traits: ControllerSkin.Traits) -> [ControllerSkin.Item]?
+    func items(for traits: ControllerSkin.Traits, alt: Bool) -> [ControllerSkin.Item]?
     
-    func isTranslucent(for traits: ControllerSkin.Traits) -> Bool?
+    func isTranslucent(for traits: ControllerSkin.Traits, alt: Bool) -> Bool?
     
-    func gameScreenFrame(for traits: ControllerSkin.Traits) -> CGRect?
-    func screens(for traits: ControllerSkin.Traits) -> [ControllerSkin.Screen]?
+    func gameScreenFrame(for traits: ControllerSkin.Traits, alt: Bool) -> CGRect?
+    func screens(for traits: ControllerSkin.Traits, alt: Bool) -> [ControllerSkin.Screen]?
     
-    func aspectRatio(for traits: ControllerSkin.Traits) -> CGSize?
+    func aspectRatio(for traits: ControllerSkin.Traits, alt: Bool) -> CGSize?
     
-    func previewSize(for traits: ControllerSkin.Traits) -> CGSize?
+    func previewSize(for traits: ControllerSkin.Traits, alt: Bool) -> CGSize?
     
-    func supportedTraits(for traits: ControllerSkin.Traits) -> ControllerSkin.Traits?
+    func supportedTraits(for traits: ControllerSkin.Traits, alt: Bool) -> ControllerSkin.Traits?
 }
 
 public extension ControllerSkinProtocol
 {
-    func supportedTraits(for traits: ControllerSkin.Traits) -> ControllerSkin.Traits?
+    func supportedTraits(for traits: ControllerSkin.Traits, alt: Bool) -> ControllerSkin.Traits?
     {
         var traits = traits
         
-        while !self.supports(traits)
+        while !self.supports(traits, alt: alt)
         {
             guard traits.device == .iphone, traits.displayType == .edgeToEdge else { return nil }
             
@@ -50,9 +50,9 @@ public extension ControllerSkinProtocol
         return traits
     }
     
-    func gameScreenFrame(for traits: DeltaCore.ControllerSkin.Traits) -> CGRect?
+    func gameScreenFrame(for traits: DeltaCore.ControllerSkin.Traits, alt: Bool) -> CGRect?
     {
-        return self.screens(for: traits)?.first?.outputFrame
+        return self.screens(for: traits, alt: alt)?.first?.outputFrame
     }
 }
 

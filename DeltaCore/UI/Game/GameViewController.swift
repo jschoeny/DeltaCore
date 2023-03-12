@@ -300,7 +300,7 @@ open class GameViewController: UIViewController, GameControllerReceiver
              
             (controllerViewFrame, availableGameFrame) = self.view.bounds.divided(atDistance: 0, from: .maxYEdge)
             
-        case let traits? where traits.orientation == .portrait && !(self.controllerView.controllerSkin?.screens(for: traits) ?? []).contains(where: { $0.placement == .controller }):
+        case let traits? where traits.orientation == .portrait && !(self.controllerView.controllerSkin?.screens(for: traits, alt: self.controllerView.isAltRepresentationsEnabled) ?? []).contains(where: { $0.placement == .controller }):
             // Portrait (and no custom screens with `controller` placement):
             // - Controller View should be pinned to bottom of self.view and centered horizontally.
             // - Game View should be vertically centered between top of screen and controller view.
@@ -596,7 +596,7 @@ private extension GameViewController
     {
         guard let controllerSkin = self.controllerView.controllerSkin,
               let traits = self.controllerView.controllerSkinTraits,
-              var screens = controllerSkin.screens(for: traits)
+              var screens = controllerSkin.screens(for: traits, alt: self.controllerView.isAltRepresentationsEnabled)
         else { return nil }
         
         guard traits.displayType == .splitView else {

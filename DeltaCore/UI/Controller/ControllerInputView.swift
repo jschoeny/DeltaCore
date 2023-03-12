@@ -47,7 +47,7 @@ class ControllerInputView: UIInputView
         guard
             let controllerSkin = self.controllerView.controllerSkin,
             let traits = self.controllerView.controllerSkinTraits,
-            let aspectRatio = controllerSkin.aspectRatio(for: traits)
+            let aspectRatio = controllerSkin.aspectRatio(for: traits, alt: self.controllerView.isAltRepresentationsEnabled)
         else { return }
         
         if self.bounds != self.previousBounds
