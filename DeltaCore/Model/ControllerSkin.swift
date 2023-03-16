@@ -356,7 +356,7 @@ public extension ControllerSkin
         
         if let image = self.imageCache.object(forKey: cacheKey as NSString)
         {
-            let size = CGSize(width: image.size.width ?? 300, height: image.size.height ?? 300)
+            let size = CGSize(width: image.size.width, height: image.size.height)
             return size
         }
         
@@ -434,11 +434,11 @@ private extension ControllerSkin
         let fallbackRepresentation: Representation?
         if alt
         {
-            fallbackRepresentation = self.altRepresentations[traits]
+            fallbackRepresentation = self.altRepresentations[fallbackTraits]
         }
         else
         {
-            fallbackRepresentation = self.representations[traits]
+            fallbackRepresentation = self.representations[fallbackTraits]
         }
         return fallbackRepresentation
     }
