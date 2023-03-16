@@ -221,7 +221,7 @@ public extension ControllerSkin
         guard let imageName = item.thumbstickImageName, let size = item.thumbstickSize else { return nil }
         guard let entry = self.archive[imageName] else { return nil }
         
-        let cacheKey = imageName + self.cacheKey(for: traits, size: preferredSize)
+        let cacheKey = imageName + self.cacheKey(for: traits, size: preferredSize, alt: alt)
         
         if let image = self.imageCache.object(forKey: cacheKey as NSString)
         {
@@ -265,7 +265,7 @@ public extension ControllerSkin
     {
         guard let representation = self.representation(for: traits, alt: alt) else { return nil }
         
-        let cacheKey = self.cacheKey(for: traits, size: preferredSize)
+        let cacheKey = self.cacheKey(for: traits, size: preferredSize, alt: alt)
         
         if let image = self.imageCache.object(forKey: cacheKey as NSString)
         {
@@ -352,7 +352,7 @@ public extension ControllerSkin
     {
         guard let representation = self.representation(for: traits, alt: alt) else { return nil }
         
-        let cacheKey = self.cacheKey(for: traits, size: UIScreen.main.previewSkinSize)
+        let cacheKey = self.cacheKey(for: traits, size: UIScreen.main.previewSkinSize, alt: alt)
         
         if let image = self.imageCache.object(forKey: cacheKey as NSString)
         {
@@ -443,9 +443,9 @@ private extension ControllerSkin
         return fallbackRepresentation
     }
     
-    func cacheKey(for traits: Traits, size: Size) -> String
+    func cacheKey(for traits: Traits, size: Size, alt: Bool) -> String
     {
-        return String(describing: traits) + "-" + String(describing: size)
+        return String(describing: traits) + "-" + String(describing: size) + "-" + String(describing: alt)
     }
 }
 

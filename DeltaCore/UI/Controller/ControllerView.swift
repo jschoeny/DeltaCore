@@ -452,7 +452,7 @@ public extension ControllerView
                 
                 if let controllerSkin = self.controllerSkin
                 {
-                    let cacheKey = String(describing: traits) + "-" + String(describing: self.controllerSkinSize)
+                    let cacheKey = String(describing: traits) + "-" + String(describing: self.controllerSkinSize) + "-" + String(describing: self._useAltRepresentations)
                     
                     if
                         let cache = self.imageCache.object(forKey: controllerSkin.identifier as NSString),
