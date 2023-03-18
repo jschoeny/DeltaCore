@@ -105,6 +105,12 @@ public class ControllerView: UIView, GameController
         }
     }
     
+    public var isDebugModeEnabled = true {
+        didSet {
+            self._showDebugMode = self.isDebugModeEnabled
+        }
+    }
+    
     //MARK: - <GameControllerType>
     /// <GameControllerType>
     public var name: String {
@@ -153,6 +159,7 @@ public class ControllerView: UIView, GameController
     private var _performedInitialLayout = false
     private var _delayedUpdatingControllerSkin = false
     private var _useAltRepresentations = false
+    private var _showDebugMode = false
     
     private var controllerInputView: ControllerInputView?
     
@@ -417,10 +424,7 @@ public extension ControllerView
             return
         }
 
-        if let isDebugModeEnabled = self.controllerSkin?.isDebugModeEnabled
-        {
-            self.controllerDebugView.isHidden = !isDebugModeEnabled
-        }
+        self.controllerDebugView.isHidden = !self._showDebugMode
         
         var isTranslucent = false
         
