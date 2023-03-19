@@ -64,6 +64,7 @@ public struct ControllerSkin: ControllerSkinProtocol
     public let identifier: String
     public let gameType: GameType
     public let isDebugModeEnabled: Bool
+    public let hasAltRepresentations: Bool
     
     public let fileURL: URL
     
@@ -118,9 +119,18 @@ public struct ControllerSkin: ControllerSkinProtocol
             
             guard self.representations.count > 0 else { return nil }
             
-            let altRepresentationsDictionary = info["altRepresentations"] as? RepresentationDictionary ?? representationsDictionary
+            let altRepresentationsSet: Set<Representation>
             
-            let altRepresentationsSet = ControllerSkin.parsedRepresentations(from: altRepresentationsDictionary, skinID: identifier)
+            if let altRepresentationsDictionary = info["altRepresentations"] as? RepresentationDictionary
+            {
+                self.hasAltRepresentations = true
+                altRepresentationsSet = ControllerSkin.parsedRepresentations(from: altRepresentationsDictionary, skinID: identifier)
+            }
+            else
+            {
+                self.hasAltRepresentations = false
+                altRepresentationsSet = ControllerSkin.parsedRepresentations(from: representationsDictionary, skinID: identifier)
+            }
             
             var altRepresentations = [Traits: Representation]()
             for altRepresentation in altRepresentationsSet

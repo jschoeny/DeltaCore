@@ -14,6 +14,7 @@ public protocol ControllerSkinProtocol
     var identifier: String { get }
     var gameType: GameType { get }
     var isDebugModeEnabled: Bool { get }
+    var hasAltRepresentations: Bool { get }
     
     func supports(_ traits: ControllerSkin.Traits, alt: Bool) -> Bool
     
