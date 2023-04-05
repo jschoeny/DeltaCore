@@ -11,6 +11,9 @@ import UIKit
 class ButtonsInputView: UIView
 {
     var isHapticFeedbackEnabled = true
+    var isClickyHapticEnabled = true
+    
+    var hapticFeedbackStrength = 1.0
     
     var items: [ControllerSkin.Item]?
     
@@ -27,8 +30,7 @@ class ButtonsInputView: UIView
     }
     
     private let imageView = UIImageView(frame: .zero)
-    
-    private let feedbackGenerator = UIImpactFeedbackGenerator(style: .medium)
+    private let feedbackGenerator: UIImpactFeedbackGenerator
     
     private var touchInputsMappingDictionary: [UITouch: Set<AnyInput>] = [:]
     private var previousTouchInputs = Set<AnyInput>()
@@ -42,6 +44,15 @@ class ButtonsInputView: UIView
     
     override init(frame: CGRect)
     {
+        if #available(iOS 13.0, *), self.isClickyHapticEnabled
+        {
+            self.feedbackGenerator = UIImpactFeedbackGenerator(style: .rigid)
+        }
+        else
+        {
+            self.feedbackGenerator = UIImpactFeedbackGenerator(style: .medium)
+        }
+        
         super.init(frame: frame)
         
         self.isMultipleTouchEnabled = true
@@ -199,7 +210,15 @@ private extension ButtonsInputView
             {
                 switch UIDevice.current.feedbackSupportLevel
                 {
-                case .feedbackGenerator: self.feedbackGenerator.impactOccurred()
+                case .feedbackGenerator:
+                    if #available(iOS 13.0, *)
+                    {
+                        self.feedbackGenerator.impactOccurred(intensity: self.hapticFeedbackStrength)
+                    }
+                    else
+                    {
+                        self.feedbackGenerator.impactOccurred()
+                    }
                 case .basic, .unsupported: UIDevice.current.vibrate()
                 }
             }
@@ -208,6 +227,23 @@ private extension ButtonsInputView
         if !deactivatedInputs.isEmpty
         {
             self.deactivateInputsHandler?(deactivatedInputs)
+            
+            if self.isHapticFeedbackEnabled, self.isClickyHapticEnabled
+            {
+                switch UIDevice.current.feedbackSupportLevel
+                {
+                case .feedbackGenerator:
+                    if #available(iOS 13.0, *)
+                    {
+                        self.feedbackGenerator.impactOccurred(intensity: self.hapticFeedbackStrength)
+                    }
+                    else
+                    {
+                        self.feedbackGenerator.impactOccurred()
+                    }
+                case .basic, .unsupported: UIDevice.current.vibrate()
+                }
+            }
         }
     }
 }

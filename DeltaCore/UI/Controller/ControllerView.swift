@@ -87,9 +87,21 @@ public class ControllerView: UIView, GameController
     
     public var translucentControllerSkinOpacity: CGFloat = 0.7
     
+    public var hapticFeedbackStrength = 1.0 {
+        didSet {
+            self.buttonsView.hapticFeedbackStrength = self.hapticFeedbackStrength
+        }
+    }
+    
     public var isButtonHapticFeedbackEnabled = true {
         didSet {
             self.buttonsView.isHapticFeedbackEnabled = self.isButtonHapticFeedbackEnabled
+        }
+    }
+    
+    public var isClickyHapticEnabled = true {
+        didSet {
+            self.buttonsView.isClickyHapticEnabled = self.isClickyHapticEnabled
         }
     }
     
