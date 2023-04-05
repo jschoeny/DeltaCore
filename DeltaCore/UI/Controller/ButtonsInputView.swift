@@ -219,7 +219,7 @@ private extension ButtonsInputView
                     {
                         self.feedbackGenerator.impactOccurred()
                     }
-                case .basic, .unsupported: UIDevice.current.vibrate()
+                case .basic, .unsupported: UIDevice.current.vibrate(self.hapticFeedbackStrength)
                 }
             }
         }
@@ -241,7 +241,7 @@ private extension ButtonsInputView
                     {
                         self.feedbackGenerator.impactOccurred()
                     }
-                case .basic, .unsupported: UIDevice.current.vibrate()
+                case .basic, .unsupported: UIDevice.current.vibrate(self.hapticFeedbackStrength)
                 }
             }
         }

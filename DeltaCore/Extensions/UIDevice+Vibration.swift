@@ -46,7 +46,7 @@ public extension UIDevice
         #endif
     }
     
-    func vibrate()
+    func vibrate(_ intensity: CGFloat)
     {
         guard self.isVibrationSupported else { return }
         
@@ -65,7 +65,7 @@ public extension UIDevice
             
             // Must use NSArray/NSDictionary to prevent crash.
             let pattern: [Any] = [false, 0, true, vibrationLength]
-            let dictionary: [String: Any] = ["VibePattern": pattern, "Intensity": 1]
+            let dictionary: [String: Any] = ["VibePattern": pattern, "Intensity": intensity]
             
             AudioServicesPlaySystemSoundWithVibration(kSystemSoundID_Vibrate, nil, dictionary as NSDictionary)
         
