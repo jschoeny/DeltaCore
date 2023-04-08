@@ -12,8 +12,11 @@ class ButtonsInputView: UIView
 {
     var isHapticFeedbackEnabled = true
     var isClickyHapticEnabled = true
+    var isTouchOverlayEnabled = true
     
     var hapticFeedbackStrength = 1.0
+    var touchOverlayOpacity = 1.0
+    var touchOverlaySize = 1.0
     
     var items: [ControllerSkin.Item]?
     
@@ -28,6 +31,9 @@ class ButtonsInputView: UIView
             self.imageView.image = newValue
         }
     }
+    
+    private let touchOverlayView = UIImageView(frame: .zero)
+    private let touchOverlayGradient = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(), colors: [UIColor(white: 1.0, alpha: 1.0).cgColor, UIColor(white: 1.0, alpha: 0.0).cgColor] as CFArray, locations: [0.3, 1.0])!
     
     private let imageView = UIImageView(frame: .zero)
     private let feedbackGenerator: UIImpactFeedbackGenerator
@@ -66,6 +72,14 @@ class ButtonsInputView: UIView
                                      self.imageView.trailingAnchor.constraint(equalTo: self.trailingAnchor),
                                      self.imageView.topAnchor.constraint(equalTo: self.topAnchor),
                                      self.imageView.bottomAnchor.constraint(equalTo: self.bottomAnchor)])
+        
+        self.touchOverlayView.translatesAutoresizingMaskIntoConstraints = false
+        self.addSubview(self.touchOverlayView)
+        
+        NSLayoutConstraint.activate([self.touchOverlayView.leadingAnchor.constraint(equalTo: self.leadingAnchor),
+                                     self.touchOverlayView.trailingAnchor.constraint(equalTo: self.trailingAnchor),
+                                     self.touchOverlayView.topAnchor.constraint(equalTo: self.topAnchor),
+                                     self.touchOverlayView.bottomAnchor.constraint(equalTo: self.bottomAnchor)])
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -80,11 +94,21 @@ class ButtonsInputView: UIView
         }
         
         self.updateInputs(for: touches)
+        
+        if self.isTouchOverlayEnabled
+        {
+            self.updateTouchOverlay()
+        }
     }
     
     public override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?)
     {
         self.updateInputs(for: touches)
+        
+        if self.isTouchOverlayEnabled
+        {
+            self.updateTouchOverlay()
+        }
     }
     
     public override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?)
@@ -95,6 +119,11 @@ class ButtonsInputView: UIView
         }
         
         self.updateInputs(for: touches)
+        
+        if self.isTouchOverlayEnabled
+        {
+            self.updateTouchOverlay()
+        }
     }
     
     public override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?)
@@ -245,5 +274,119 @@ private extension ButtonsInputView
                 }
             }
         }
+    }
+    
+    func updateTouchOverlay() {
+        guard self.image != nil else { return }
+        guard let items = self.items else { return }
+        
+        let overlayImage: UIImage?
+        
+        //TODO: Put overlay opacity setting here
+        UIGraphicsBeginImageContextWithOptions(self.bounds.size, false, self.touchOverlayOpacity)
+        let context = UIGraphicsGetCurrentContext()!
+        
+        for item in items
+        {
+            guard item.kind != .touchScreen, item.kind != .thumbstick else { continue }
+            
+            for touch in self.touchInputsMappingDictionary.keys
+            {
+                var scaledTouch = touch.location(in: self)
+                scaledTouch.x /= self.bounds.width
+                scaledTouch.y /= self.bounds.height
+                
+                let frame = item.extendedFrame
+                
+                guard frame.contains(scaledTouch) else { continue }
+                
+                var inputCenter = CGPoint()
+                
+                switch item.inputs
+                {
+                case .directional where item.kind == .thumbstick:
+                    // thumbstick  code
+                    break
+                case .touch:
+                    // touch code
+                    break
+                case .standard:
+                    // normal button code
+                    inputCenter = self.centerPoint(rect: item.frame)
+                
+                case .directional:
+                    // calculate input rectangles for up down left right to test if touch lies within them
+                    let topRect = CGRect(x: item.extendedFrame.minX, y: item.extendedFrame.minY, width: item.extendedFrame.width, height: (item.frame.height / 3) + (item.frame.minY - item.extendedFrame.minY))
+                    let bottomRect = CGRect(x: item.extendedFrame.minX, y: item.frame.maxY - item.frame.height / 3, width: item.extendedFrame.width, height: (item.frame.height / 3) + (item.extendedFrame.maxY - item.frame.maxY))
+                    let leftRect = CGRect(x: item.extendedFrame.minX, y: item.extendedFrame.minY, width: (item.frame.width / 3) + (item.frame.minX - item.extendedFrame.minX), height: item.extendedFrame.height)
+                    let rightRect = CGRect(x: item.frame.maxX - item.frame.width / 3, y: item.extendedFrame.minY, width: (item.frame.width / 3) + (item.extendedFrame.maxX - item.frame.maxX), height: item.extendedFrame.height)
+                    
+                    // offset to move the corner inputs in by so they're not sticking so far out
+                    let offsetX = item.frame.width * 0.1; let offsetY = item.frame.height * 0.1
+                    
+                    // determine which section of the dpad touch is in, set inputCenter to that location
+                    if topRect.contains(scaledTouch)
+                    {
+                        inputCenter.y = self.centerPoint(rect: topRect).y
+                        if leftRect.contains(scaledTouch)
+                        {
+                            inputCenter.x = self.centerPoint(rect: leftRect).x + offsetX
+                            inputCenter.y += offsetY
+                        }
+                        else if rightRect.contains(scaledTouch)
+                        {
+                            inputCenter.x = self.centerPoint(rect: rightRect).x - offsetX
+                            inputCenter.y += offsetY
+                        }
+                        else
+                        {
+                            inputCenter.x = self.centerPoint(rect: item.frame).x
+                        }
+                    }
+                    else if bottomRect.contains(scaledTouch)
+                    {
+                        inputCenter.y = self.centerPoint(rect: bottomRect).y
+                        if leftRect.contains(scaledTouch)
+                        {
+                            inputCenter.x = self.centerPoint(rect: leftRect).x + offsetX
+                            inputCenter.y -= offsetY
+                        }
+                        else if rightRect.contains(scaledTouch)
+                        {
+                            inputCenter.x = self.centerPoint(rect: rightRect).x - offsetY
+                            inputCenter.y -= offsetY
+                        }
+                        else
+                        {
+                            inputCenter.x = self.centerPoint(rect: item.frame).x
+                        }
+                    }
+                    else if leftRect.contains(scaledTouch)
+                    {
+                        inputCenter = self.centerPoint(rect: leftRect)
+                    }
+                    else if rightRect.contains(scaledTouch)
+                    {
+                        inputCenter = self.centerPoint(rect: rightRect)
+                    }
+                    else
+                    {
+                        inputCenter = self.centerPoint(rect: item.frame)
+                    }
+                }
+                
+                inputCenter.x *= self.bounds.width; inputCenter.y *= self.bounds.height
+                
+                context.drawRadialGradient(self.touchOverlayGradient, startCenter: inputCenter, startRadius: 0, endCenter: inputCenter, endRadius: 40 * self.touchOverlaySize, options: [])
+            }
+        }
+        
+        overlayImage = UIGraphicsGetImageFromCurrentImageContext()
+        self.touchOverlayView.image = overlayImage
+    }
+    
+    func centerPoint(rect: CGRect) -> CGPoint
+    {
+        return CGPoint(x: rect.minX + (rect.width / 2), y: rect.minY + (rect.height / 2))
     }
 }

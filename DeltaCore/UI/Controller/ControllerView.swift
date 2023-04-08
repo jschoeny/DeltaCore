@@ -111,6 +111,24 @@ public class ControllerView: UIView, GameController
         }
     }
     
+    public var isButtonTouchOverlayEnabled = true {
+        didSet {
+            self.buttonsView.isTouchOverlayEnabled = self.isButtonTouchOverlayEnabled
+        }
+    }
+    
+    public var touchOverlayOpacity = 1.0 {
+        didSet {
+            self.buttonsView.touchOverlayOpacity = self.touchOverlayOpacity
+        }
+    }
+    
+    public var touchOverlaySize = 1.0 {
+        didSet {
+            self.buttonsView.touchOverlaySize = self.touchOverlaySize
+        }
+    }
+    
     public var isAltRepresentationsEnabled = true {
         didSet {
             self._useAltRepresentations = self.isAltRepresentationsEnabled
