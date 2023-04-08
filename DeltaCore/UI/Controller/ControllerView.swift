@@ -172,6 +172,7 @@ public class ControllerView: UIView, GameController
     private var _delayedUpdatingControllerSkin = false
     private var _useAltRepresentations = false
     private var _showDebugMode = false
+    private var _isCurrentSkinTranslucent = false
     
     private var controllerInputView: ControllerInputView?
     
@@ -500,6 +501,7 @@ public extension ControllerView
             self.controllerDebugView.items = items
             
             isTranslucent = self.controllerSkin?.isTranslucent(for: traits, alt: self._useAltRepresentations) ?? false
+            self._isCurrentSkinTranslucent = isTranslucent
             
             var thumbstickViews = [ControllerSkin.Item.ID: ThumbstickInputView]()
             var previousThumbstickViews = self.thumbstickViews
@@ -688,7 +690,7 @@ public extension ControllerView
             self.transitionSnapshotView = nil
         }
         
-        self.contentView.alpha = 1.0
+        self.contentView.alpha = self._isCurrentSkinTranslucent ? self.translucentControllerSkinOpacity : 1.0
     }
 }
 
