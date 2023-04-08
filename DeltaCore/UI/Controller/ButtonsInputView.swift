@@ -18,6 +18,8 @@ class ButtonsInputView: UIView
     var touchOverlayOpacity = 1.0
     var touchOverlaySize = 1.0
     
+    var touchOverlayColor = UIColor.white
+    
     var items: [ControllerSkin.Item]?
     
     var activateInputsHandler: ((Set<AnyInput>) -> Void)?
@@ -32,10 +34,8 @@ class ButtonsInputView: UIView
         }
     }
     
-    private let touchOverlayView = UIImageView(frame: .zero)
-    private let touchOverlayGradient = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(), colors: [UIColor(white: 1.0, alpha: 1.0).cgColor, UIColor(white: 1.0, alpha: 0.0).cgColor] as CFArray, locations: [0.3, 1.0])!
-    
     private let imageView = UIImageView(frame: .zero)
+    private let touchOverlayView = UIImageView(frame: .zero)
     private let feedbackGenerator: UIImpactFeedbackGenerator
     
     private var touchInputsMappingDictionary: [UITouch: Set<AnyInput>] = [:]
@@ -282,6 +282,8 @@ private extension ButtonsInputView
         
         let overlayImage: UIImage?
         
+        let touchOverlayGradient = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(), colors: [self.touchOverlayColor.withAlphaComponent(self.touchOverlayOpacity).cgColor, self.touchOverlayColor.withAlphaComponent(0.0).cgColor] as CFArray, locations: [0.3, 1.0])!
+        
         //TODO: Put overlay opacity setting here
         UIGraphicsBeginImageContextWithOptions(self.bounds.size, false, self.touchOverlayOpacity)
         let context = UIGraphicsGetCurrentContext()!
@@ -377,7 +379,7 @@ private extension ButtonsInputView
                 
                 inputCenter.x *= self.bounds.width; inputCenter.y *= self.bounds.height
                 
-                context.drawRadialGradient(self.touchOverlayGradient, startCenter: inputCenter, startRadius: 0, endCenter: inputCenter, endRadius: 40 * self.touchOverlaySize, options: [])
+                context.drawRadialGradient(touchOverlayGradient, startCenter: inputCenter, startRadius: 0, endCenter: inputCenter, endRadius: 40 * self.touchOverlaySize, options: [])
             }
         }
         

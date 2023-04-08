@@ -129,6 +129,12 @@ public class ControllerView: UIView, GameController
         }
     }
     
+    public var touchOverlayColor = UIColor.white {
+        didSet {
+            self.buttonsView.touchOverlayColor = self.touchOverlayColor
+        }
+    }
+    
     public var isAltRepresentationsEnabled = true {
         didSet {
             self._useAltRepresentations = self.isAltRepresentationsEnabled
