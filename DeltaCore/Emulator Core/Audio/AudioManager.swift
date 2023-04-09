@@ -87,6 +87,12 @@ public class AudioManager: NSObject, AudioRendering
         }
     }
     
+    public var playWithOtherMedia: Bool = true {
+        didSet {
+            self.updateOutputVolume()
+        }
+    }
+    
     public private(set) var audioBuffer: RingBuffer
     
     public internal(set) var rate = 1.0 {
@@ -95,13 +101,7 @@ public class AudioManager: NSObject, AudioRendering
         }
     }
     
-    public var overrideVolume: Float = 1.0 {
-        didSet {
-            self.updateOutputVolume()
-        }
-    }
-    
-    public var respectMuteSwitch: Bool = true {
+    public var audioVolume: Float = 1.0 {
         didSet {
             self.updateOutputVolume()
         }
@@ -361,28 +361,28 @@ private extension AudioManager
         {
             let route = AVAudioSession.sharedInstance().currentRoute
             
-            if AVAudioSession.sharedInstance().isOtherAudioPlaying
+            if AVAudioSession.sharedInstance().isOtherAudioPlaying && !self.playWithOtherMedia
             {
-                // Always mute if another app is playing audio.
+                // Mute if another app is playing audio and the user has chosen to.
                 self.audioEngine.mainMixerNode.outputVolume = 0.0
             }
             else if self.respectsSilentMode
             {
                 if self.isMuted && (route.isHeadsetPluggedIn || !route.isOutputtingToExternalDevice)
                 {
-                    // Respect mute switch IFF playing through speaker or headphones.
+                    // Respect mute switch if playing through speaker or headphones.
                     self.audioEngine.mainMixerNode.outputVolume = 0.0
                 }
                 else
                 {
                     // Ignore mute switch for other audio routes (e.g. AirPlay).
-                    self.audioEngine.mainMixerNode.outputVolume = 1.0
+                    self.audioEngine.mainMixerNode.outputVolume = self.audioVolume >= 0.0 && self.audioVolume <= 1.0 ? self.audioVolume : 1.0
                 }
             }
             else
             {
                 // Ignore silent mode and always play game audio (unless another app is playing audio).
-                self.audioEngine.mainMixerNode.outputVolume = 1.0
+                self.audioEngine.mainMixerNode.outputVolume = self.audioVolume >= 0.0 && self.audioVolume <= 1.0 ? self.audioVolume : 1.0
             }
         }
     }
