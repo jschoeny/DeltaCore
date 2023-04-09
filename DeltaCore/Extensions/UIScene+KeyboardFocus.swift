@@ -16,7 +16,6 @@ private var keyboardFocusTimerKey: UInt8 = 0
     var _isTargetOfKeyboardEventDeferringEnvironment: Bool { get }
 }
 
-@available(iOS 13, *)
 extension UIScene
 {
     static let keyboardFocusDidChangeNotification: Notification.Name = .init("keyboardFocusDidChangeNotification")
@@ -58,10 +57,9 @@ extension UIScene
     }
 }
 
-@objc @available(iOS 13, *)
 private extension UIScene
 {
-    func didReceiveKeyboardFocus(_ notification: Notification)
+    @objc func didReceiveKeyboardFocus(_ notification: Notification)
     {
         guard self.activationState == .foregroundActive else { return }
         
@@ -72,7 +70,7 @@ private extension UIScene
         }
     }
     
-    func didLoseKeyboardFocus(_ notification: Notification)
+    @objc func didLoseKeyboardFocus(_ notification: Notification)
     {
         if #available(iOS 16, *), let windowScene = self as? UIWindowScene, windowScene.isStageManagerEnabled
         {

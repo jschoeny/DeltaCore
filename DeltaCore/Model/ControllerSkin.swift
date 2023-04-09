@@ -55,7 +55,6 @@ extension ControllerSkin
     }
 }
 
-@available(iOS 13, *)
 extension ControllerSkin.Screen: Identifiable {}
 
 public struct ControllerSkin: ControllerSkinProtocol
@@ -644,7 +643,6 @@ extension ControllerSkin.Item: Hashable
     }
 }
 
-@available(iOS 13, *)
 extension ControllerSkin.Item: Identifiable {}
 
 private extension ControllerSkin

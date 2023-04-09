@@ -201,33 +201,24 @@ public class MFiGameController: NSObject, GameController
                 thumbstickChangedHandler(.rightThumbstickDown, .rightThumbstickUp, value)
             }
             
-            if #available(iOS 12.1, *)
-            {
-                extendedGamepad.leftThumbstickButton?.pressedChangedHandler = { (button, value, pressed) in inputChangedHandler(.leftThumbstickButton, pressed) }
-                extendedGamepad.rightThumbstickButton?.pressedChangedHandler = { (button, value, pressed) in inputChangedHandler(.rightThumbstickButton, pressed) }
-            }
+            extendedGamepad.leftThumbstickButton?.pressedChangedHandler = { (button, value, pressed) in inputChangedHandler(.leftThumbstickButton, pressed) }
+            extendedGamepad.rightThumbstickButton?.pressedChangedHandler = { (button, value, pressed) in inputChangedHandler(.rightThumbstickButton, pressed) }
             
-            if #available(iOS 13, *)
-            {
-                extendedGamepad.buttonOptions?.pressedChangedHandler = { (button, value, pressed) in inputChangedHandler(.options, pressed) }
-            }
+            extendedGamepad.buttonOptions?.pressedChangedHandler = { (button, value, pressed) in inputChangedHandler(.options, pressed) }
             
-            if #available(iOS 14, *)
+            extendedGamepad.buttonHome?.pressedChangedHandler = { (button, value, pressed) in inputChangedHandler(.home, pressed) }
+                
+            if let dualShockGamepad = extendedGamepad as? GCDualShockGamepad
             {
-                extendedGamepad.buttonHome?.pressedChangedHandler = { (button, value, pressed) in inputChangedHandler(.home, pressed) }
+                dualShockGamepad.touchpadButton.pressedChangedHandler = { (button, value, pressed) in inputChangedHandler(.psTouchpadButton, pressed) }
+            }
                 
-                if let dualShockGamepad = extendedGamepad as? GCDualShockGamepad
-                {
-                    dualShockGamepad.touchpadButton.pressedChangedHandler = { (button, value, pressed) in inputChangedHandler(.psTouchpadButton, pressed) }
-                }
-                
-                if let xboxGamepad = extendedGamepad as? GCXboxGamepad
-                {
-                    xboxGamepad.paddleButton1?.pressedChangedHandler = { (button, value, pressed) in inputChangedHandler(.xboxPaddleButton1, pressed) }
-                    xboxGamepad.paddleButton2?.pressedChangedHandler = { (button, value, pressed) in inputChangedHandler(.xboxPaddleButton2, pressed) }
-                    xboxGamepad.paddleButton3?.pressedChangedHandler = { (button, value, pressed) in inputChangedHandler(.xboxPaddleButton3, pressed) }
-                    xboxGamepad.paddleButton4?.pressedChangedHandler = { (button, value, pressed) in inputChangedHandler(.xboxPaddleButton4, pressed) }
-                }
+            if let xboxGamepad = extendedGamepad as? GCXboxGamepad
+            {
+                xboxGamepad.paddleButton1?.pressedChangedHandler = { (button, value, pressed) in inputChangedHandler(.xboxPaddleButton1, pressed) }
+                xboxGamepad.paddleButton2?.pressedChangedHandler = { (button, value, pressed) in inputChangedHandler(.xboxPaddleButton2, pressed) }
+                xboxGamepad.paddleButton3?.pressedChangedHandler = { (button, value, pressed) in inputChangedHandler(.xboxPaddleButton3, pressed) }
+                xboxGamepad.paddleButton4?.pressedChangedHandler = { (button, value, pressed) in inputChangedHandler(.xboxPaddleButton4, pressed) }
             }
             
             if #available(iOS 14.5, *)

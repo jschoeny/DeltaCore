@@ -45,7 +45,7 @@ class ButtonsInputView: UIView
     
     private let imageView = UIImageView(frame: .zero)
     private let touchOverlayView = UIImageView(frame: .zero)
-    private let feedbackGenerator: UIImpactFeedbackGenerator
+    private let feedbackGenerator: UIImpactFeedbackGenerator = UIImpactFeedbackGenerator(style: .rigid)
     
     private var touchInputsMappingDictionary: [UITouch: Set<AnyInput>] = [:]
     private var previousTouchInputs = Set<AnyInput>()
@@ -59,20 +59,11 @@ class ButtonsInputView: UIView
     
     override init(frame: CGRect)
     {
-        if #available(iOS 13.0, *), self.isClickyHapticEnabled
-        {
-            self.feedbackGenerator = UIImpactFeedbackGenerator(style: .rigid)
-        }
-        else
-        {
-            self.feedbackGenerator = UIImpactFeedbackGenerator(style: .medium)
-        }
-        
-        AudioServicesCreateSystemSoundID(self.buttonPressedSoundURL as CFURL, &self.buttonPressedSoundID)
-        
         super.init(frame: frame)
         
         self.isMultipleTouchEnabled = true
+        
+        AudioServicesCreateSystemSoundID(self.buttonPressedSoundURL as CFURL, &self.buttonPressedSoundID)
         
         self.feedbackGenerator.prepare()
         
@@ -255,15 +246,7 @@ private extension ButtonsInputView
             {
                 switch UIDevice.current.feedbackSupportLevel
                 {
-                case .feedbackGenerator:
-                    if #available(iOS 13.0, *)
-                    {
-                        self.feedbackGenerator.impactOccurred(intensity: self.hapticFeedbackStrength)
-                    }
-                    else
-                    {
-                        self.feedbackGenerator.impactOccurred()
-                    }
+                case .feedbackGenerator: self.feedbackGenerator.impactOccurred(intensity: self.hapticFeedbackStrength)
                 case .basic, .unsupported: UIDevice.current.vibrate(self.hapticFeedbackStrength)
                 }
             }
@@ -277,15 +260,7 @@ private extension ButtonsInputView
             {
                 switch UIDevice.current.feedbackSupportLevel
                 {
-                case .feedbackGenerator:
-                    if #available(iOS 13.0, *)
-                    {
-                        self.feedbackGenerator.impactOccurred(intensity: self.hapticFeedbackStrength)
-                    }
-                    else
-                    {
-                        self.feedbackGenerator.impactOccurred()
-                    }
+                case .feedbackGenerator: self.feedbackGenerator.impactOccurred(intensity: self.hapticFeedbackStrength)
                 case .basic, .unsupported: UIDevice.current.vibrate(self.hapticFeedbackStrength)
                 }
             }

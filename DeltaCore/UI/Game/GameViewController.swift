@@ -133,19 +133,10 @@ open class GameViewController: UIViewController, GameControllerReceiver
         NotificationCenter.default.addObserver(self, selector: #selector(GameViewController.keyboardWillChangeFrame(with:)), name: UIResponder.keyboardWillChangeFrameNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(GameViewController.keyboardWillHide(with:)), name: UIResponder.keyboardWillHideNotification, object: nil)
         
-        if #available(iOS 13, *)
-        {
-            NotificationCenter.default.addObserver(self, selector: #selector(GameViewController.willResignActive(with:)), name: UIScene.willDeactivateNotification, object: nil)
-            NotificationCenter.default.addObserver(self, selector: #selector(GameViewController.didBecomeActive(with:)), name: UIScene.didActivateNotification, object: nil)
-            NotificationCenter.default.addObserver(self, selector: #selector(GameViewController.willEnterForeground(_:)), name: UIScene.willEnterForegroundNotification, object: nil)
-            NotificationCenter.default.addObserver(self, selector: #selector(GameViewController.sceneKeyboardFocusDidChange(_:)), name: UIScene.keyboardFocusDidChangeNotification, object: nil)
-        }
-        else
-        {
-            NotificationCenter.default.addObserver(self, selector: #selector(GameViewController.willResignActive(with:)), name: UIApplication.willResignActiveNotification, object: nil)
-            NotificationCenter.default.addObserver(self, selector: #selector(GameViewController.didBecomeActive(with:)), name: UIApplication.didBecomeActiveNotification, object: nil)
-            NotificationCenter.default.addObserver(self, selector: #selector(GameViewController.willEnterForeground(_:)), name: UIApplication.willEnterForegroundNotification, object: nil)
-        }
+        NotificationCenter.default.addObserver(self, selector: #selector(GameViewController.willResignActive(with:)), name: UIScene.willDeactivateNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(GameViewController.didBecomeActive(with:)), name: UIScene.didActivateNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(GameViewController.willEnterForeground(_:)), name: UIScene.willEnterForegroundNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(GameViewController.sceneKeyboardFocusDidChange(_:)), name: UIScene.keyboardFocusDidChangeNotification, object: nil)
     }
     
     deinit
@@ -220,12 +211,9 @@ open class GameViewController: UIViewController, GameControllerReceiver
             self.controllerView.becomeFirstResponder()
         }
         
-        if #available(iOS 13, *)
+        if let scene = self.view.window?.windowScene
         {
-            if let scene = self.view.window?.windowScene
-            {
-                scene.startTrackingKeyboardFocus()
-            }
+            scene.startTrackingKeyboardFocus()
         }
     }
     
@@ -636,10 +624,7 @@ private extension GameViewController
 {
     @objc func willResignActive(with notification: Notification)
     {
-        if #available(iOS 13, *)
-        {
-            guard let scene = notification.object as? UIScene, scene == self.view.window?.windowScene else { return }
-        }
+        guard let scene = notification.object as? UIScene, scene == self.view.window?.windowScene else { return }
         
         self.emulatorCoreQueue.async {
             guard self.emulatorCore?.state == .running else { return }
@@ -649,10 +634,7 @@ private extension GameViewController
     
     @objc func didBecomeActive(with notification: Notification)
     {
-        if #available(iOS 13, *)
-        {
-            guard let scene = notification.object as? UIWindowScene, scene == self.view.window?.windowScene else { return }
-        }
+        guard let scene = notification.object as? UIWindowScene, scene == self.view.window?.windowScene else { return }
                         
         if #available(iOS 16, *), self.isEnteringForeground
         {
@@ -677,11 +659,8 @@ private extension GameViewController
             self.isEnteringForeground = false
         }
         
-        if #available(iOS 13, *)
-        {
-            // Make sure scene has keyboard focus before automatically resuming.
-            guard let scene = self.view.window?.windowScene, scene.hasKeyboardFocus else { return }
-        }
+        // Make sure scene has keyboard focus before automatically resuming.
+        guard let scene = self.view.window?.windowScene, scene.hasKeyboardFocus else { return }
         
         self.emulatorCoreQueue.async {
             guard self.emulatorCore?.state == .paused else { return }
@@ -691,10 +670,7 @@ private extension GameViewController
         
     @objc func willEnterForeground(_ notification: Notification)
     {
-        if #available(iOS 13, *)
-        {
-            guard let scene = notification.object as? UIScene, scene == self.view.window?.windowScene else { return }
-        }
+        guard let scene = notification.object as? UIScene, scene == self.view.window?.windowScene else { return }
         
         self.isEnteringForeground = true
     }
@@ -772,7 +748,7 @@ private extension GameViewController
         animator.startAnimation()
         
         let isLocalKeyboard = notification.userInfo?[UIResponder.keyboardIsLocalUserInfoKey] as? Bool ?? false
-        if #available(iOS 13, *), let scene = self.view.window?.windowScene, scene.activationState == .foregroundInactive, isLocalKeyboard
+        if let scene = self.view.window?.windowScene, scene.activationState == .foregroundInactive, isLocalKeyboard
         {
             // Explicitly resign first responder to prevent keyboard controller automatically appearing when not frontmost app.
             self.controllerView.resignFirstResponder()
@@ -781,7 +757,6 @@ private extension GameViewController
         self.updateGameViews()
     }
     
-    @available(iOS 13.0, *)
     @objc func sceneKeyboardFocusDidChange(_ notification: Notification)
     {
         guard let scene = notification.object as? UIWindowScene, scene == self.view.window?.windowScene else { return }

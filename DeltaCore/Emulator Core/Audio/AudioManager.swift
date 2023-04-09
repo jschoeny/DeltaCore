@@ -118,7 +118,6 @@ public class AudioManager: NSObject, AudioRendering
     private let audioPlayerNode: AVAudioPlayerNode
     private let timePitchEffect: AVAudioUnitTimePitch
     
-    @available(iOS 13.0, *)
     private var sourceNode: AVAudioSourceNode {
         get {
             if _sourceNode == nil
@@ -177,10 +176,7 @@ public class AudioManager: NSObject, AudioRendering
         
         super.init()
         
-        if #available(iOS 13.0, *)
-        {
-            self.audioEngine.attach(self.sourceNode)
-        }
+        self.audioEngine.attach(self.sourceNode)
         
         self.updateOutputVolume()
         
@@ -201,12 +197,7 @@ public extension AudioManager
         {
             try AVAudioSession.sharedInstance().setDeltaCategory()
             try AVAudioSession.sharedInstance().setPreferredIOBufferDuration(0.005)
-            
-            if #available(iOS 13.0, *)
-            {
-               try AVAudioSession.sharedInstance().setAllowHapticsAndSystemSoundsDuringRecording(true)
-            }
-            
+            try AVAudioSession.sharedInstance().setAllowHapticsAndSystemSoundsDuringRecording(true)
             try AVAudioSession.sharedInstance().setActive(true)
         }
         catch
@@ -336,31 +327,12 @@ private extension AudioManager
             self.audioEngine.disconnectNodeOutput(self.timePitchEffect)
             self.audioEngine.connect(self.timePitchEffect, to: self.audioEngine.mainMixerNode, format: outputAudioFormat)
 
-            if #available(iOS 13.0, *)
-            {
-                self.audioEngine.detach(self.sourceNode)
-                
-                self.sourceNode = self.makeSourceNode()
-                self.audioEngine.attach(self.sourceNode)
-                
-                self.audioEngine.connect(self.sourceNode, to: self.timePitchEffect, format: outputAudioFormat)
-            }
-            else
-            {
-                self.audioEngine.disconnectNodeOutput(self.audioPlayerNode)
-                self.audioEngine.connect(self.audioPlayerNode, to: self.timePitchEffect, format: outputAudioFormat)
-                
-                for _ in 0 ..< self.audioBufferCount
-                {
-                    let inputAudioBufferFrameCapacity = max(inputAudioBufferFrameCount, outputAudioBufferFrameCount)
-                    
-                    if let inputBuffer = AVAudioPCMBuffer(pcmFormat: self.audioFormat, frameCapacity: AVAudioFrameCount(inputAudioBufferFrameCapacity)),
-                        let outputBuffer = AVAudioPCMBuffer(pcmFormat: outputAudioFormat, frameCapacity: AVAudioFrameCount(outputAudioBufferFrameCount))
-                    {
-                        self.render(inputBuffer, into: outputBuffer)
-                    }
-                }
-            }
+            self.audioEngine.detach(self.sourceNode)
+            
+            self.sourceNode = self.makeSourceNode()
+            self.audioEngine.attach(self.sourceNode)
+            
+            self.audioEngine.connect(self.sourceNode, to: self.timePitchEffect, format: outputAudioFormat)
             
             do
             {
@@ -371,12 +343,6 @@ private extension AudioManager
                 }
                 
                 try self.audioEngine.start()
-                
-                if #available(iOS 13.0, *) {}
-                else
-                {
-                    self.audioPlayerNode.play()
-                }
             }
             catch
             {
@@ -421,7 +387,6 @@ private extension AudioManager
         }
     }
     
-    @available(iOS 13.0, *)
     func makeSourceNode() -> AVAudioSourceNode
     {
         var isPrimed = false
