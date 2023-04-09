@@ -7,12 +7,14 @@
 //
 
 import UIKit
+import AVFoundation
 
 class ButtonsInputView: UIView
 {
     var isHapticFeedbackEnabled = true
     var isClickyHapticEnabled = true
     var isTouchOverlayEnabled = true
+    var isAudioFeedbackEnabled = true
     
     var hapticFeedbackStrength = 1.0
     var touchOverlayOpacity = 1.0
@@ -31,6 +33,13 @@ class ButtonsInputView: UIView
         }
         set {
             self.imageView.image = newValue
+        }
+    }
+    
+    var buttonPressedSoundID: SystemSoundID = 444
+    var buttonPressedSoundURL: URL = URL(fileURLWithPath: "/System/Library/Audio/UISounds/Tock.caf") {
+        didSet {
+            AudioServicesCreateSystemSoundID(self.buttonPressedSoundURL as CFURL, &self.buttonPressedSoundID)
         }
     }
     
@@ -58,6 +67,8 @@ class ButtonsInputView: UIView
         {
             self.feedbackGenerator = UIImpactFeedbackGenerator(style: .medium)
         }
+        
+        AudioServicesCreateSystemSoundID(self.buttonPressedSoundURL as CFURL, &self.buttonPressedSoundID)
         
         super.init(frame: frame)
         
@@ -235,6 +246,11 @@ private extension ButtonsInputView
         {
             self.activateInputsHandler?(activatedInputs)
             
+            if self.isAudioFeedbackEnabled
+            {
+                AudioServicesPlaySystemSound(self.buttonPressedSoundID)
+            }
+            
             if self.isHapticFeedbackEnabled
             {
                 switch UIDevice.current.feedbackSupportLevel
@@ -284,7 +300,6 @@ private extension ButtonsInputView
         
         let touchOverlayGradient = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(), colors: [self.touchOverlayColor.withAlphaComponent(self.touchOverlayOpacity).cgColor, self.touchOverlayColor.withAlphaComponent(0.0).cgColor] as CFArray, locations: [0.3, 1.0])!
         
-        //TODO: Put overlay opacity setting here
         UIGraphicsBeginImageContextWithOptions(self.bounds.size, false, self.touchOverlayOpacity)
         let context = UIGraphicsGetCurrentContext()!
         
@@ -389,6 +404,6 @@ private extension ButtonsInputView
     
     func centerPoint(rect: CGRect) -> CGPoint
     {
-        return CGPoint(x: rect.minX + (rect.width / 2), y: rect.minY + (rect.height / 2))
+        return CGPoint(x: rect.midX, y: rect.midY)
     }
 }

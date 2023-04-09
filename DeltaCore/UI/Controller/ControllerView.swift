@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import AVFoundation
 
 private struct ControllerViewInputMapping: GameControllerInputMappingProtocol
 {
@@ -108,6 +109,24 @@ public class ControllerView: UIView, GameController
     public var isThumbstickHapticFeedbackEnabled = true {
         didSet {
             self.thumbstickViews.values.forEach { $0.isHapticFeedbackEnabled = self.isThumbstickHapticFeedbackEnabled }
+        }
+    }
+    
+    public var isButtonAudioFeedbackEnabled = true {
+        didSet {
+            self.buttonsView.isAudioFeedbackEnabled = self.isButtonAudioFeedbackEnabled
+        }
+    }
+    
+    public var buttonPressedSoundID: SystemSoundID {
+        get {
+            return self.buttonsView.buttonPressedSoundID
+        }
+    }
+    
+    public var buttonPressedSoundURL: URL = URL(fileURLWithPath: "/System/Library/Audio/UISounds/Tock.caf") {
+        didSet {
+            self.buttonsView.buttonPressedSoundURL = self.buttonPressedSoundURL
         }
     }
     
