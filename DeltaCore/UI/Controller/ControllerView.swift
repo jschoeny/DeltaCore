@@ -91,6 +91,7 @@ public class ControllerView: UIView, GameController
     public var hapticFeedbackStrength = 1.0 {
         didSet {
             self.buttonsView.hapticFeedbackStrength = self.hapticFeedbackStrength
+            self.thumbstickViews.values.forEach { $0.hapticFeedbackStrength = self.hapticFeedbackStrength }
         }
     }
     
@@ -103,6 +104,7 @@ public class ControllerView: UIView, GameController
     public var isClickyHapticEnabled = true {
         didSet {
             self.buttonsView.isClickyHapticEnabled = self.isClickyHapticEnabled
+            self.thumbstickViews.values.forEach { $0.isClickyHapticEnabled = self.isClickyHapticEnabled }
         }
     }
     
