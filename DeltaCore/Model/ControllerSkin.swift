@@ -423,15 +423,8 @@ private extension ControllerSkin
     
     func representation(for traits: Traits, alt: Bool = false) -> Representation?
     {
-        let representation: Representation?
-        if alt
-        {
-            representation = self.altRepresentations[traits]
-        }
-        else
-        {
-            representation = self.representations[traits]
-        }
+        let representation = alt ? self.altRepresentations[traits] : self.representations[traits]
+        
         guard representation == nil else {
             return representation
         }
@@ -440,15 +433,8 @@ private extension ControllerSkin
             return nil
         }
         
-        let fallbackRepresentation: Representation?
-        if alt
-        {
-            fallbackRepresentation = self.altRepresentations[fallbackTraits]
-        }
-        else
-        {
-            fallbackRepresentation = self.representations[fallbackTraits]
-        }
+        let fallbackRepresentation = alt ? self.altRepresentations[fallbackTraits] : self.representations[fallbackTraits]
+        
         return fallbackRepresentation
     }
     
