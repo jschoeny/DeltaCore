@@ -61,6 +61,20 @@ public class GameView: UIView
         }
     }
     
+    public var shader: CIFilter? {
+        didSet {
+            guard self.shader != oldValue else { return }
+            self.update()
+        }
+    }
+    
+    public var imageScale: CGFloat = 1 {    
+        didSet {
+            guard self.imageScale != oldValue else { return }
+            self.update()
+        }
+    }
+    
     public var outputImage: CIImage? {
         guard let inputImage = self.inputImage else { return nil }
         
@@ -68,8 +82,14 @@ public class GameView: UIView
         
         switch self.samplerMode
         {
-        case .linear: image = inputImage.samplingLinear()
-        case .nearestNeighbor: image = inputImage.samplingNearest()
+        case .linear: image = inputImage.samplingLinear().transformed(by: CGAffineTransform(scaleX: self.imageScale, y: self.imageScale))
+        case .nearestNeighbor: image = inputImage.samplingNearest().transformed(by: CGAffineTransform(scaleX: self.imageScale, y: self.imageScale))
+        }
+        
+        if let shader = self.shader
+        {
+            shader.setValue(image, forKey: kCIInputImageKey)
+            image = shader.outputImage
         }
                 
         if let filter = self.filter
@@ -191,7 +211,7 @@ public extension GameView
         
         if let inputFrame = screen.inputFrame
         {
-            let cropFilter = CIFilter(name: "CICrop", parameters: ["inputRectangle": CIVector(cgRect: inputFrame)])!
+            let cropFilter = CIFilter(name: "CICrop", parameters: ["inputRectangle": CIVector(cgRect: CGRect(x: inputFrame.minX, y: inputFrame.minY, width: inputFrame.width * self.imageScale, height: inputFrame.height * self.imageScale))])!
             filters.append(cropFilter)
         }
         
