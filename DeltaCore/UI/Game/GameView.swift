@@ -68,9 +68,16 @@ public class GameView: UIView
         }
     }
     
-    public var imageScale: CGFloat = 1 {    
+    public var imageScale: CGFloat = 1 {
         didSet {
             guard self.imageScale != oldValue else { return }
+            self.update()
+        }
+    }
+    
+    public var inputFrame: CGRect? {
+        didSet {
+            guard self.inputFrame != oldValue else { return }
             self.update()
         }
     }
@@ -90,6 +97,14 @@ public class GameView: UIView
         {
             shader.setValue(image, forKey: kCIInputImageKey)
             image = shader.outputImage
+        }
+        
+        if let inputFrame = self.inputFrame
+        {
+            let cropFrame = CGRect(x: inputFrame.minX * self.imageScale, y: inputFrame.minY * self.imageScale, width: inputFrame.width * self.imageScale, height: inputFrame.height * self.imageScale)
+            let cropFilter = CIFilter(name: "CICrop", parameters: ["inputRectangle": CIVector(cgRect: cropFrame)])!
+            cropFilter.setValue(image, forKey: kCIInputImageKey)
+            image = cropFilter.outputImage
         }
                 
         if let filter = self.filter
@@ -211,8 +226,7 @@ public extension GameView
         
         if let inputFrame = screen.inputFrame
         {
-            let cropFilter = CIFilter(name: "CICrop", parameters: ["inputRectangle": CIVector(cgRect: CGRect(x: inputFrame.minX, y: inputFrame.minY, width: inputFrame.width * self.imageScale, height: inputFrame.height * self.imageScale))])!
-            filters.append(cropFilter)
+            self.inputFrame = inputFrame
         }
         
         if let screenFilters = screen.filters
