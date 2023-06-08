@@ -198,13 +198,22 @@ public extension ControllerSkin
 {
     static func standardControllerSkin(for gameType: GameType) -> ControllerSkin?
     {
-        guard
-            let deltaCore = Delta.core(for: gameType),
-            let fileURL = deltaCore.resourceBundle.url(forResource: "Standard", withExtension: "deltaskin")
-        else { return nil }
+        guard let deltaCore = Delta.core(for: gameType) else { return nil }
         
-        let controllerSkin = ControllerSkin(fileURL: fileURL)
-        return controllerSkin
+        if let fileURL = deltaCore.resourceBundle.url(forResource: "Standard", withExtension: "ignitedskin")
+        {
+            let controllerSkin = ControllerSkin(fileURL: fileURL)
+            return controllerSkin
+        }
+        else if let fileURL = deltaCore.resourceBundle.url(forResource: "Standard", withExtension: "deltaskin")
+        {
+            let controllerSkin = ControllerSkin(fileURL: fileURL)
+            return controllerSkin
+        }
+        else
+        {
+            return nil
+        }
     }
 }
 
