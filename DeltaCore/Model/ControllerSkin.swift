@@ -102,8 +102,8 @@ public struct ControllerSkin: ControllerSkinProtocol
             let gameType = GameType(gameTypeString)
             #endif
             
-            self.name = name
-            self.identifier = identifier
+            self.name = fileURL.pathExtension == "deltaskin" ? name + " (Delta Skin)" : name
+            self.identifier = fileURL.pathExtension == "deltaskin" ? identifier + ".delta" : identifier
             self.gameType = gameType
             self.isDebugModeEnabled = isDebugModeEnabled
             
