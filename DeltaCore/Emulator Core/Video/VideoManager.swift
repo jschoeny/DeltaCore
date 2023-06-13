@@ -51,8 +51,14 @@ public class VideoManager: NSObject, VideoRendering
     
     public var isEnabled = true
     
-    private let context: EAGLContext
-    private let ciContext: CIContext
+    public var renderingAPI: EAGLRenderingAPI = .openGLES2 {
+        didSet {
+            self.updateProcessor()
+        }
+    }
+    
+    private var context: EAGLContext
+    private var ciContext: CIContext
     
     private var processor: VideoProcessor
     @NSCopying private var processedImage: CIImage?
@@ -65,13 +71,13 @@ public class VideoManager: NSObject, VideoRendering
     public init(videoFormat: VideoFormat)
     {
         self.videoFormat = videoFormat
-        self.context = EAGLContext(api: .openGLES2)!
+        self.context = EAGLContext(api: self.renderingAPI)!
         self.ciContext = CIContext(eaglContext: self.context, options: [.workingColorSpace: NSNull()])
         
         switch videoFormat.format
         {
         case .bitmap: self.processor = BitmapProcessor(videoFormat: videoFormat)
-        case .openGLES: self.processor = OpenGLESProcessor(videoFormat: videoFormat, context: self.context)
+        case .openGLES: self.processor = OpenGLESProcessor(videoFormat: videoFormat, context: self.context, renderingAPI: self.renderingAPI)
         }
         
         super.init()
@@ -89,9 +95,19 @@ public class VideoManager: NSObject, VideoRendering
         case .openGLES:
             guard let processor = self.processor as? OpenGLESProcessor else { return }
             processor.videoFormat = self.videoFormat
+            
+            self.context = EAGLContext(api: self.renderingAPI)!
+            self.ciContext = CIContext(eaglContext: self.context, options: [.workingColorSpace: NSNull()])
+            processor.context = EAGLContext(api: self.renderingAPI, sharegroup: self.context.sharegroup)!
+            
+            for gameView in self.gameViews
+            {
+                gameView.renderingAPI = self.renderingAPI
+                gameView.eaglContext = self.context
+            }
         }
         
-        processor.viewport = self.viewport
+        self.processor.viewport = self.viewport
     }
     
     deinit

@@ -61,6 +61,8 @@ public class GameView: UIView
         }
     }
     
+    public var renderingAPI: EAGLRenderingAPI = .openGLES2
+    
     public var outputImage: CIImage? {
         guard let inputImage = self.inputImage else { return nil }
         
@@ -93,7 +95,9 @@ public class GameView: UIView
             // to self.glkView may crash if we've already rendered to a game view.
             EAGLContext.setCurrent(nil)
             
-            self.glkView.context = EAGLContext(api: .openGLES2, sharegroup: newValue.sharegroup)!
+            if let eaglContext = EAGLContext(api: self.renderingAPI, sharegroup: newValue.sharegroup) {
+                self.glkView.context = eaglContext
+            }
             self.context = self.makeContext()
             
             DispatchQueue.main.async {
@@ -104,7 +108,7 @@ public class GameView: UIView
     }
     private lazy var context: CIContext = self.makeContext()
         
-    private let glkView: GLKView
+    private var glkView: GLKView
     private lazy var glkViewDelegate = GameViewGLKViewDelegate(gameView: self)
     
     private var lock = os_unfair_lock()
@@ -112,7 +116,7 @@ public class GameView: UIView
     
     public override init(frame: CGRect)
     {
-        let eaglContext = EAGLContext(api: .openGLES2)!
+        let eaglContext = EAGLContext(api: self.renderingAPI)!
         self.glkView = GLKView(frame: CGRect.zero, context: eaglContext)
         
         super.init(frame: frame)
@@ -122,7 +126,7 @@ public class GameView: UIView
     
     public required init?(coder aDecoder: NSCoder)
     {
-        let eaglContext = EAGLContext(api: .openGLES2)!
+        let eaglContext = EAGLContext(api: self.renderingAPI)!
         self.glkView = GLKView(frame: CGRect.zero, context: eaglContext)
         
         super.init(coder: aDecoder)

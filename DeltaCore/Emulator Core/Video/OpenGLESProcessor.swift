@@ -23,7 +23,7 @@ class OpenGLESProcessor: VideoProcessor
         }
     }
     
-    private let context: EAGLContext
+    public var context: EAGLContext
     
     private var framebuffer: GLuint = 0
     private var texture: GLuint = 0
@@ -32,10 +32,10 @@ class OpenGLESProcessor: VideoProcessor
     private var indexBuffer: GLuint = 0
     private var vertexBuffer: GLuint = 0
     
-    init(videoFormat: VideoFormat, context: EAGLContext)
+    init(videoFormat: VideoFormat, context: EAGLContext, renderingAPI: EAGLRenderingAPI)
     {
         self.videoFormat = videoFormat
-        self.context = EAGLContext(api: .openGLES2, sharegroup: context.sharegroup)!
+        self.context = EAGLContext(api: renderingAPI, sharegroup: context.sharegroup)!
     }
     
     deinit
