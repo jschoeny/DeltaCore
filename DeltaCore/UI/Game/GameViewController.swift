@@ -99,7 +99,12 @@ open class GameViewController: UIViewController, GameControllerReceiver
             self.updateGameViews()
         }
     }
-    public var blurScreenRadius: CGFloat = 5 {
+    public var blurScreenStrength: CGFloat = 10 {
+        didSet {
+            self.updateGameViews()
+        }
+    }
+    public var blurScreenKeepAspect: Bool = false {
         didSet {
             self.updateGameViews()
         }
@@ -452,14 +457,30 @@ extension GameViewController
         guard self.blurScreenEnabled else { return }
         
         var filters: [CIFilter] = []
+        let scale: CGFloat = 3
         
-        let blurFilter = CIFilter(name: "CIGaussianBlur", parameters: ["inputRadius": self.blurScreenRadius])!
+        let scaleTransform = CGAffineTransform(scaleX: scale, y: scale)
+        let scaleFilter = CIFilter(name: "CIAffineTransform", parameters: ["inputTransform": NSValue(cgAffineTransform: scaleTransform)])!
+        filters.append(scaleFilter)
+        
+        let stretchX = self.availableGameFrame.width / self.screenSize.width
+        let stretchY = self.availableGameFrame.height / self.screenSize.height
+        let stretchFactor = 2 / max(stretchX, stretchY)
+        
+        let blurRadius = self.blurScreenStrength * 10 * scale * stretchFactor
+        let blurFilter = CIFilter(name: "CIGaussianBlur", parameters: ["inputRadius": blurRadius])!
         filters.append(blurFilter)
         
-        let adjustedSize = CGRect(x: self.blurScreenRadius * 4,
-                                  y: self.blurScreenRadius * 4,
-                                  width: self.screenSize.width - (self.blurScreenRadius * 2),
-                                  height: self.screenSize.height - (self.blurScreenRadius * 2))
+        var adjustedSize = CGRect(x: blurRadius * 4,
+                                  y: blurRadius * 4,
+                                  width: self.screenSize.width * scale - (blurRadius * 2),
+                                  height: self.screenSize.height * scale - (blurRadius * 2))
+        
+        if self.blurScreenKeepAspect
+        {
+            let availableGameRect = CGSize(width: self.availableGameFrame.width, height: self.availableGameFrame.height)
+            adjustedSize = AVMakeRect(aspectRatio: availableGameRect, insideRect: adjustedSize)
+        }
         
         let cropFilter = CIFilter(name: "CICrop", parameters: ["inputRectangle": CIVector(cgRect: adjustedSize)])!
         filters.append(cropFilter)
