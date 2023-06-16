@@ -99,16 +99,9 @@ open class GameViewController: UIViewController, GameControllerReceiver
             self.updateGameViews()
         }
     }
-    public var blurScreenStrength: CGFloat = 10 {
-        didSet {
-            self.updateGameViews()
-        }
-    }
-    public var blurScreenKeepAspect: Bool = false {
-        didSet {
-            self.updateGameViews()
-        }
-    }
+    public var blurScreenKeepAspect: Bool = true
+    public var blurScreenStrength: CGFloat = 1
+    public var blurScreenBrightness: CGFloat = 0
         
     open private(set) var controllerView: ControllerView!
     private var splitViewInputViewHeight: CGFloat = 0
@@ -484,6 +477,12 @@ extension GameViewController
         
         let cropFilter = CIFilter(name: "CICrop", parameters: ["inputRectangle": CIVector(cgRect: adjustedSize)])!
         filters.append(cropFilter)
+        
+        if self.blurScreenBrightness != 0
+        {
+            let brightnessFilter = CIFilter(name: "CIColorControls", parameters: ["inputBrightness": self.blurScreenBrightness])!
+            filters.append(brightnessFilter)
+        }
         
         self.blurScreen.filters = filters
     }
