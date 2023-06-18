@@ -27,7 +27,7 @@ fileprivate extension NSLayoutConstraint
     }
 }
 
-public protocol GameViewControllerDelegate: class
+public protocol GameViewControllerDelegate: AnyObject
 {
     func gameViewControllerShouldPauseEmulation(_ gameViewController: GameViewController) -> Bool
     func gameViewControllerShouldResumeEmulation(_ gameViewController: GameViewController) -> Bool
@@ -100,6 +100,7 @@ open class GameViewController: UIViewController, GameControllerReceiver
         }
     }
     public var blurScreenKeepAspect: Bool = true
+    public var blurScreenOverride: Bool = false
     public var blurScreenStrength: CGFloat = 1
     public var blurScreenBrightness: CGFloat = 0
         
@@ -447,10 +448,19 @@ extension GameViewController
 {
     func updateBlurScreen()
     {
-        guard self.blurScreenEnabled else { return }
+        guard self.shouldDisplayBackgroundBlur() else {
+            self.blurScreen.filters = nil
+            return
+        }
         
         var filters: [CIFilter] = []
         let scale: CGFloat = 3
+        
+        //TODO: Fix background blur on genesis. Below code fixes it when rotating, but breaks it on resuming all other consoles
+        //if let inputExtent = self.gameView.inputImage?.extent
+        //{
+        //    self.screenSize = CGSize(width: inputExtent.width, height: inputExtent.height)
+        //}
         
         let scaleTransform = CGAffineTransform(scaleX: scale, y: scale)
         let scaleFilter = CIFilter(name: "CIAffineTransform", parameters: ["inputTransform": NSValue(cgAffineTransform: scaleTransform)])!
@@ -460,7 +470,7 @@ extension GameViewController
         let stretchY = self.availableGameFrame.height / self.screenSize.height
         let stretchFactor = 2 / max(stretchX, stretchY)
         
-        let blurRadius = self.blurScreenStrength * 10 * scale * stretchFactor
+        let blurRadius = self.blurScreenStrength * 8 * scale * stretchFactor
         let blurFilter = CIFilter(name: "CIGaussianBlur", parameters: ["inputRadius": blurRadius])!
         filters.append(blurFilter)
         
@@ -656,7 +666,7 @@ private extension GameViewController
               var screens = controllerSkin.screens(for: traits, alt: self.controllerView.isAltRepresentationsEnabled)
         else
         {
-            if self.blurScreenEnabled
+            if self.shouldDisplayBackgroundBlur()
             {
                 return [self.blurScreen, self.mainScreen]
             }
@@ -668,9 +678,8 @@ private extension GameViewController
         
         guard traits.displayType == .splitView else {
             // When not in split view, manage all game views regardless of placement.
-            if self.blurScreenEnabled
+            if self.shouldDisplayBackgroundBlur()
             {
-                self.updateBlurScreen()
                 screens.insert(self.blurScreen, at: 0)
             }
             
@@ -689,6 +698,25 @@ private extension GameViewController
         }
         
         return screens
+    }
+    
+    func shouldDisplayBackgroundBlur() -> Bool
+    {
+        if self.blurScreenOverride
+        {
+            return self.blurScreenEnabled
+        }
+        else
+        {
+            if let skinSetting = self.controllerView.backgroundBlur
+            {
+                return skinSetting
+            }
+            else
+            {
+                return self.blurScreenEnabled
+            }
+        }
     }
 }
 
