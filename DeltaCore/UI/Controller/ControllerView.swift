@@ -180,6 +180,10 @@ public class ControllerView: UIView, GameController
         }
     }
     
+    public var backgroundBlur: Bool? {
+        return self._useBackgroundBlur
+    }
+    
     public let inputType: GameControllerInputType = .controllerSkin
     public lazy var defaultInputMapping: GameControllerInputMappingProtocol? = ControllerViewInputMapping(controllerView: self)
     
@@ -218,6 +222,7 @@ public class ControllerView: UIView, GameController
     private var _useAltRepresentations = false
     private var _showDebugMode = false
     private var _isCurrentSkinTranslucent = false
+    private var _useBackgroundBlur: Bool? = nil
     
     private var controllerInputView: ControllerInputView?
     
@@ -556,6 +561,8 @@ public extension ControllerView
             
             isTranslucent = self.controllerSkin?.isTranslucent(for: traits, alt: self._useAltRepresentations) ?? false
             self._isCurrentSkinTranslucent = isTranslucent
+            
+            self._useBackgroundBlur = self.controllerSkin?.backgroundBlur(for: traits, alt: self._useAltRepresentations)
             
             var thumbstickViews = [ControllerSkin.Item.ID: ThumbstickInputView]()
             var previousThumbstickViews = self.thumbstickViews

@@ -348,6 +348,12 @@ public extension ControllerSkin
         return representation.isTranslucent
     }
     
+    func backgroundBlur(for traits: Traits, alt: Bool = false) -> Bool?
+    {
+        guard let representation = self.representation(for: traits, alt: alt) else { return nil }
+        return representation.backgroundBlur
+    }
+    
     func gameScreenFrame(for traits: Traits, alt: Bool = false) -> CGRect?
     {
         guard let representation = self.representation(for: traits, alt: alt) else { return nil }
@@ -803,6 +809,7 @@ private extension ControllerSkin
         
         let assets: [AssetSize: String]
         let isTranslucent: Bool
+        let backgroundBlur: Bool?
         let screens: [Screen]?
         let aspectRatio: CGSize
         
@@ -851,6 +858,8 @@ private extension ControllerSkin
             guard self.assets.count > 0 else { return nil }
             
             self.isTranslucent = dictionary["translucent"] as? Bool ?? false
+            
+            self.backgroundBlur = dictionary["backgroundBlur"] as? Bool ?? nil
             
             if
                 let gameScreenFrameDictionary = dictionary["gameScreenFrame"] as? [String: CGFloat],
