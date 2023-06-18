@@ -120,6 +120,7 @@ public extension VideoManager
 {
     func add(_ gameView: GameView)
     {
+        gameView.renderingAPI = self.renderingAPI
         gameView.eaglContext = self.context
         self.gameViews.append(gameView)
     }
