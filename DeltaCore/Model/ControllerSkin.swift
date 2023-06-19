@@ -413,17 +413,24 @@ private extension ControllerSkin
         {
             let data = try self.archive.extract(entry)
             
-            let image: UIImage?
+            var image: UIImage?
             
             switch assetSize
             {
-            case .small, .medium, .large, .preview:
+            case .small, .medium, .large:
                 guard let imageScale = assetSize.imageScale(for: representation.traits) else { return nil }
                 image = UIImage(data: data, scale: imageScale)
                 
-            case .resizable:
+            case .resizable, .preview:
                 guard let targetSize = assetSize.targetSize(for: representation.traits) else { return nil }
                 image = UIImage.image(withPDFData: data, targetSize: targetSize)
+                
+                // fallback to normal image loading for preview images not in pdf format
+                if image == nil
+                {
+                    guard let imageScale = assetSize.imageScale(for: representation.traits) else { return nil }
+                    image = UIImage(data: data, scale: imageScale)
+                }
             }
             
             return image
