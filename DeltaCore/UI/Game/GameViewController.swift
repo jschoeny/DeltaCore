@@ -453,31 +453,32 @@ extension GameViewController
             return
         }
         
-        var filters: [CIFilter] = []
-        let scale: CGFloat = 3
-        
         //TODO: Fix background blur on genesis. Below code fixes it when rotating, but breaks it on resuming all other consoles
         //if let inputExtent = self.gameView.inputImage?.extent
         //{
         //    self.screenSize = CGSize(width: inputExtent.width, height: inputExtent.height)
         //}
         
-        let scaleTransform = CGAffineTransform(scaleX: scale, y: scale)
-        let scaleFilter = CIFilter(name: "CIAffineTransform", parameters: ["inputTransform": NSValue(cgAffineTransform: scaleTransform)])!
-        filters.append(scaleFilter)
+        var filters: [CIFilter] = []
         
         let stretchX = self.availableGameFrame.width / self.screenSize.width
         let stretchY = self.availableGameFrame.height / self.screenSize.height
         let stretchFactor = 2 / max(stretchX, stretchY)
         
-        let blurRadius = self.blurScreenStrength * 8 * scale * stretchFactor
+        let blurScale: CGFloat = (stretchFactor < 1) ? 2 : 1
+        
+        let scaleTransform = CGAffineTransform(scaleX: blurScale, y: blurScale)
+        let scaleFilter = CIFilter(name: "CIAffineTransform", parameters: ["inputTransform": NSValue(cgAffineTransform: scaleTransform)])!
+        filters.append(scaleFilter)
+        
+        let blurRadius = self.blurScreenStrength * 10 * blurScale * stretchFactor
         let blurFilter = CIFilter(name: "CIGaussianBlur", parameters: ["inputRadius": blurRadius])!
         filters.append(blurFilter)
         
         var adjustedSize = CGRect(x: blurRadius * 4,
                                   y: blurRadius * 4,
-                                  width: self.screenSize.width * scale - (blurRadius * 2),
-                                  height: self.screenSize.height * scale - (blurRadius * 2))
+                                  width: self.screenSize.width * blurScale - (blurRadius * 2),
+                                  height: self.screenSize.height * blurScale - (blurRadius * 2))
         
         if self.blurScreenKeepAspect
         {
