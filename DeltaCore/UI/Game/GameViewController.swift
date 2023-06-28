@@ -103,6 +103,12 @@ open class GameViewController: UIViewController, GameControllerReceiver
     public var blurScreenOverride: Bool = false
     public var blurScreenStrength: CGFloat = 1
     public var blurScreenBrightness: CGFloat = 0
+    
+    public var backgroundColor: UIColor = .black {
+        didSet {
+            self.view.backgroundColor = self.backgroundColor
+        }
+    }
         
     open private(set) var controllerView: ControllerView!
     private var splitViewInputViewHeight: CGFloat = 0
