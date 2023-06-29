@@ -3,9 +3,9 @@ Pod::Spec.new do |spec|
   spec.version      = "0.1"
   spec.summary      = "iOS Emulator Plug-in Framework"
   spec.description  = "iOS framework that powers Delta emulator."
-  spec.homepage     = "https://github.com/Lit-Development/DeltaCore"
+  spec.homepage     = "https://github.com/LitRitt/DeltaCore"
   spec.platform     = :ios, "14.0"
-  spec.source       = { :git => "https://github.com/Lit-Development/DeltaCore.git" }
+  spec.source       = { :git => "https://github.com/LitRitt/DeltaCore.git" }
 
   spec.author             = { "Chris Rittenhouse" => "dev@litritt.com" }
   spec.social_media_url   = "https://twitter.com/lit_ritt"
