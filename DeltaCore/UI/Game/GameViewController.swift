@@ -35,6 +35,7 @@ public protocol GameViewControllerDelegate: AnyObject
     func gameViewController(_ gameViewController: GameViewController, handleMenuInputFrom gameController: GameController)
     
     func gameViewControllerDidUpdate(_ gameViewController: GameViewController)
+    func gameViewController(_ gameViewController: GameViewController, didUpdateGameViews gameViews: [GameView])
 }
 
 public extension GameViewControllerDelegate
@@ -45,6 +46,7 @@ public extension GameViewControllerDelegate
     func gameViewController(_ gameViewController: GameViewController, handleMenuInputFrom gameController: GameController) {}
     
     func gameViewControllerDidUpdate(_ gameViewController: GameViewController) {}
+    func gameViewController(_ gameViewController: GameViewController, didUpdateGameViews gameViews: [GameView]) {}
 }
 
 private var kvoContext = 0
@@ -552,6 +554,8 @@ extension GameViewController
         
         self.gameViews = gameViews
         self.view.setNeedsLayout()
+        
+        self.delegate?.gameViewController(self, didUpdateGameViews: self.gameViews)
     }
 }
 
