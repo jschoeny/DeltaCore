@@ -96,7 +96,7 @@ open class GameViewController: UIViewController, GameControllerReceiver
     private let mainScreen: ControllerSkin.Screen! = ControllerSkin.Screen(id: "gameViewController.screen.main", inputFrame: nil, outputFrame: nil, filters: nil, placement: .app)
     private var blurScreen: ControllerSkin.Screen! = ControllerSkin.Screen(id: "gameViewController.screen.blur", inputFrame: nil, outputFrame: nil, filters: nil, placement: .app)
     
-    public var blurScreenEnabled: Bool = true {
+    public var blurScreenEnabled: Bool = false {
         didSet {
             self.updateGameViews()
         }
@@ -131,6 +131,8 @@ open class GameViewController: UIViewController, GameControllerReceiver
     // after app becomes active before checking keyboard focus to ensure we get the correct value.
     private var isEnteringForeground: Bool = false
     private weak var delayCheckKeyboardFocusTimer: Timer?
+    
+    public var isExternalDisplayConnected: Bool = false
     
     /// UIViewController
     open override var prefersStatusBarHidden: Bool {
@@ -721,6 +723,8 @@ private extension GameViewController
     
     func shouldDisplayBackgroundBlur() -> Bool
     {
+        guard !self.isExternalDisplayConnected else { return false }
+        
         if self.blurScreenOverride
         {
             return self.blurScreenEnabled
