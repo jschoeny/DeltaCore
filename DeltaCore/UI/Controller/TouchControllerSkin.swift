@@ -106,6 +106,28 @@ extension TouchControllerSkin: ControllerSkinProtocol
         return self.controllerSkin.aspectRatio(for: traits, alt: alt)
     }
     
+    public func contentSize(for traits: ControllerSkin.Traits, alt: Bool = false) -> CGSize?
+    {
+        guard let screens = self.screens(for: traits) else { return nil }
+
+        let compositeScreenSize = screens.reduce(into: CGSize.zero) { (size, screen) in
+            guard let inputFrame = screen.inputFrame else { return }
+
+            switch self.screenLayoutAxis
+            {
+            case .horizontal:
+                size.width += inputFrame.width
+                size.height = max(inputFrame.height, size.height)
+
+            case .vertical:
+                size.width = max(inputFrame.width, size.width)
+                size.height += inputFrame.height
+            }
+        }
+
+        return compositeScreenSize
+    }
+    
     public func previewSize(for traits: ControllerSkin.Traits, alt: Bool = false) -> CGSize? {
         return self.controllerSkin.previewSize(for: traits, alt: alt)
     }

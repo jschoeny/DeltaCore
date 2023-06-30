@@ -52,6 +52,8 @@ extension ControllerSkin
         public var filters: [CIFilter]?
         
         public var placement: Placement = .controller
+        
+        public var isTouchScreen: Bool = false
     }
 }
 
@@ -370,6 +372,12 @@ public extension ControllerSkin
     {
         guard let representation = self.representation(for: traits, alt: alt) else { return nil }
         return representation.aspectRatio
+    }
+    
+    func contentSize(for traits: ControllerSkin.Traits, alt: Bool = false) -> CGSize?
+    {
+        //TODO: Support `contentSize` for JSON controller skins.
+        return nil
     }
     
     func previewSize(for traits: Traits, alt: Bool = false) -> CGSize?
@@ -992,8 +1000,17 @@ private extension ControllerSkin
                         }
                     }
                     
+                    var isTouchScreen = false
+                    if let outputFrame
+                    {
+                        isTouchScreen = items.contains { item in
+                            guard item.kind == .touchScreen else { return false }
+                            return item.extendedFrame.contains(outputFrame)
+                        }
+                    }
+                    
                     let id = ControllerSkin.itemID(forSkinID: skinID, traits: traits, index: index)
-                    let screen = Screen(id: id, inputFrame: inputFrame, outputFrame: outputFrame, filters: filters, placement: screenPlacement)
+                    let screen = Screen(id: id, inputFrame: inputFrame, outputFrame: outputFrame, filters: filters, placement: screenPlacement, isTouchScreen: isTouchScreen)
                     return screen
                 }
                 

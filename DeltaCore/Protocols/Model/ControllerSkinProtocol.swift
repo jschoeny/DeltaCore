@@ -32,6 +32,8 @@ public protocol ControllerSkinProtocol
     
     func aspectRatio(for traits: ControllerSkin.Traits, alt: Bool) -> CGSize?
     
+    func contentSize(for traits: ControllerSkin.Traits, alt: Bool) -> CGSize?
+    
     func previewSize(for traits: ControllerSkin.Traits, alt: Bool) -> CGSize?
     
     func supportedTraits(for traits: ControllerSkin.Traits, alt: Bool) -> ControllerSkin.Traits?
