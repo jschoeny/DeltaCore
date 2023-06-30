@@ -82,7 +82,7 @@ extension TouchControllerSkin: ControllerSkinProtocol
 
     public func screens(for traits: ControllerSkin.Traits, alt: Bool = false) -> [ControllerSkin.Screen]?
     {
-        guard let screens = self.controllerSkin.screens(for: traits) else { return nil }
+        guard let screens = self.controllerSkin.screens(for: traits, alt: alt) else { return nil }
 
         // Filter screens first so we can use filteredScreens.count in calculations.
         let filteredScreens = screens.filter(self.screenPredicate ?? { _ in true })
