@@ -44,11 +44,13 @@ extension MFiGameController
         case leftThumbstickDown
         case leftThumbstickLeft
         case leftThumbstickRight
+        case leftThumbstickPress
         
         case rightThumbstickUp
         case rightThumbstickDown
         case rightThumbstickLeft
         case rightThumbstickRight
+        case rightThumbstickPress
         
         case a
         case b
@@ -213,6 +215,7 @@ public class MFiGameController: NSObject, GameController
                 thumbstickChangedHandler(.leftThumbstickDown, .leftThumbstickUp, value)
             }
         }
+        profile.buttons[GCInputLeftThumbstickButton]?.pressedChangedHandler = { (button, value, pressed) in inputChangedHandler(.leftThumbstickPress, pressed) }
         
         if let rightThumbstick = profile.dpads[GCInputRightThumbstick]
         {
@@ -223,6 +226,7 @@ public class MFiGameController: NSObject, GameController
                 thumbstickChangedHandler(.rightThumbstickDown, .rightThumbstickUp, value)
             }
         }
+        profile.buttons[GCInputRightThumbstickButton]?.pressedChangedHandler = { (button, value, pressed) in inputChangedHandler(.rightThumbstickPress, pressed) }
         
         let productCategory = ProductCategory(rawValue: self.controller.productCategory)
         switch productCategory
