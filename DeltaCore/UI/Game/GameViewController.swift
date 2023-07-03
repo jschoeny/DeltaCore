@@ -132,8 +132,6 @@ open class GameViewController: UIViewController, GameControllerReceiver
     private var isEnteringForeground: Bool = false
     private weak var delayCheckKeyboardFocusTimer: Timer?
     
-    public var isExternalDisplayConnected: Bool = false
-    
     /// UIViewController
     open override var prefersStatusBarHidden: Bool {
         return true
@@ -679,7 +677,11 @@ private extension GameViewController
             _ = self._resumeEmulation()
         }
     }
-    
+}
+
+//MARK: - Screens -
+public extension GameViewController
+{
     func screens(for traits: ControllerSkin.Traits) -> [ControllerSkin.Screen]?
     {
         guard let controllerSkin = self.controllerView.controllerSkin,
@@ -723,8 +725,6 @@ private extension GameViewController
     
     func shouldDisplayBackgroundBlur() -> Bool
     {
-        guard !self.isExternalDisplayConnected else { return false }
-        
         if self.blurScreenOverride
         {
             return self.blurScreenEnabled
