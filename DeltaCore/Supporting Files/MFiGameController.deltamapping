@@ -69,6 +69,13 @@
 			<key>type</key>
 			<string>standard</string>
 		</dict>
+		<key>leftThumbstickPress</key>
+		<dict>
+			<key>identifier</key>
+			<string>l3</string>
+			<key>type</key>
+			<string>standard</string>
+		</dict>
 		<key>leftTrigger</key>
 		<dict>
 			<key>identifier</key>
@@ -122,6 +129,13 @@
 		<dict>
 			<key>identifier</key>
 			<string>rightThumbstickUp</string>
+			<key>type</key>
+			<string>standard</string>
+		</dict>
+		<key>rightThumbstickPress</key>
+		<dict>
+			<key>identifier</key>
+			<string>r3</string>
 			<key>type</key>
 			<string>standard</string>
 		</dict>
