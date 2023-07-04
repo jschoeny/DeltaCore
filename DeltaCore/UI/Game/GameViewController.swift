@@ -93,6 +93,12 @@ open class GameViewController: UIViewController, GameControllerReceiver
     private var screenSize: CGSize = CGSize()
     private var availableGameFrame: CGRect = CGRect()
     
+    public var reverseScreenOrder: Bool = false {
+        didSet {
+            self.updateGameViews()
+        }
+    }
+    
     private let mainScreen: ControllerSkin.Screen! = ControllerSkin.Screen(id: "gameViewController.screen.main", inputFrame: nil, outputFrame: nil, filters: nil, placement: .app)
     private var blurScreen: ControllerSkin.Screen! = ControllerSkin.Screen(id: "gameViewController.screen.blur", inputFrame: nil, outputFrame: nil, filters: nil, placement: .app)
     
@@ -691,7 +697,7 @@ public extension GameViewController
         {
             if self.shouldDisplayBackgroundBlur()
             {
-                return [self.blurScreen, self.mainScreen]
+                return self.reverseScreenOrder ? [self.mainScreen, self.blurScreen] : [self.blurScreen, self.mainScreen]
             }
             else
             {
@@ -706,7 +712,7 @@ public extension GameViewController
                 screens.insert(self.blurScreen, at: 0)
             }
             
-            return screens
+            return self.reverseScreenOrder ? screens.reversed() : screens
         }
         
         // When in split view, only manage game views with `app` placement.
@@ -720,7 +726,7 @@ public extension GameViewController
             screens = [screen]
         }
         
-        return screens
+        return self.reverseScreenOrder ? screens.reversed() : screens
     }
     
     func shouldDisplayBackgroundBlur() -> Bool
