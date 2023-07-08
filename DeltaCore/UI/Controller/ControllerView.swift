@@ -180,6 +180,8 @@ public class ControllerView: UIView, GameController
         }
     }
     
+    public var triggerDeadzone: Float = 0
+    
     public var backgroundBlur: Bool? {
         return self._useBackgroundBlur
     }

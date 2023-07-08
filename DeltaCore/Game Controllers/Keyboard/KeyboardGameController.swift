@@ -71,6 +71,8 @@ public class KeyboardGameController: UIResponder, GameController
     
     public var playerIndex: Int?
     
+    public var triggerDeadzone: Float = 0
+    
     public let inputType: GameControllerInputType = .keyboard
     
     public private(set) lazy var defaultInputMapping: GameControllerInputMappingProtocol? = {

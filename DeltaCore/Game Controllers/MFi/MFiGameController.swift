@@ -118,6 +118,8 @@ public class MFiGameController: NSObject, GameController
         }
     }
     
+    public var triggerDeadzone: Float = 0
+    
     public let inputType: GameControllerInputType = .mfi
         
     public private(set) lazy var defaultInputMapping: GameControllerInputMappingProtocol? = {
@@ -156,6 +158,17 @@ public class MFiGameController: NSObject, GameController
             }
         }
         
+        let triggerChangedHandler: (_ input: MFiGameController.Input, _ value: Float) -> Void = { [unowned self] (input, value) in
+            if value > self.triggerDeadzone
+            {
+                self.activate(input)
+            }
+            else
+            {
+                self.deactivate(input)
+            }
+        }
+        
         let thumbstickChangedHandler: (_ input1: MFiGameController.Input, _ input2: MFiGameController.Input, _ value: Float) -> Void = { [unowned self] (input1, input2, value) in
             
             switch value
@@ -181,11 +194,11 @@ public class MFiGameController: NSObject, GameController
         profile.buttons[GCInputButtonY]?.pressedChangedHandler = { (button, value, pressed) in inputChangedHandler(.y, pressed) }
         
         profile.buttons[GCInputLeftShoulder]?.pressedChangedHandler = { (button, value, pressed) in inputChangedHandler(.leftShoulder, pressed) }
-        profile.buttons[GCInputLeftTrigger]?.pressedChangedHandler = { (button, value, pressed) in inputChangedHandler(.leftTrigger, pressed) }
+        profile.buttons[GCInputLeftTrigger]?.valueChangedHandler = { (button, value, pressed) in triggerChangedHandler(.leftTrigger, value) }
         profile.buttons[GCInputLeftThumbstickButton]?.pressedChangedHandler = { (button, value, pressed) in inputChangedHandler(.leftThumbstickButton, pressed) }
         
         profile.buttons[GCInputRightShoulder]?.pressedChangedHandler = { (button, value, pressed) in inputChangedHandler(.rightShoulder, pressed) }
-        profile.buttons[GCInputRightTrigger]?.pressedChangedHandler = { (button, value, pressed) in inputChangedHandler(.rightTrigger, pressed) }
+        profile.buttons[GCInputRightTrigger]?.valueChangedHandler = { (button, value, pressed) in triggerChangedHandler(.rightTrigger, value) }
         profile.buttons[GCInputRightThumbstickButton]?.pressedChangedHandler = { (button, value, pressed) in inputChangedHandler(.rightThumbstickButton, pressed) }
         
         // Menu = Primary menu button (Start/+/Menu)
