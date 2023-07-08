@@ -44,13 +44,11 @@ extension MFiGameController
         case leftThumbstickDown
         case leftThumbstickLeft
         case leftThumbstickRight
-        case leftThumbstickPress
         
         case rightThumbstickUp
         case rightThumbstickDown
         case rightThumbstickLeft
         case rightThumbstickRight
-        case rightThumbstickPress
         
         case a
         case b
@@ -59,9 +57,11 @@ extension MFiGameController
         
         case leftShoulder
         case leftTrigger
+        case leftThumbstickButton
         
         case rightShoulder
         case rightTrigger
+        case rightThumbstickButton
         
         case start
         case select
@@ -182,8 +182,11 @@ public class MFiGameController: NSObject, GameController
         
         profile.buttons[GCInputLeftShoulder]?.pressedChangedHandler = { (button, value, pressed) in inputChangedHandler(.leftShoulder, pressed) }
         profile.buttons[GCInputLeftTrigger]?.pressedChangedHandler = { (button, value, pressed) in inputChangedHandler(.leftTrigger, pressed) }
+        profile.buttons[GCInputLeftThumbstickButton]?.pressedChangedHandler = { (button, value, pressed) in inputChangedHandler(.leftThumbstickButton, pressed) }
+        
         profile.buttons[GCInputRightShoulder]?.pressedChangedHandler = { (button, value, pressed) in inputChangedHandler(.rightShoulder, pressed) }
         profile.buttons[GCInputRightTrigger]?.pressedChangedHandler = { (button, value, pressed) in inputChangedHandler(.rightTrigger, pressed) }
+        profile.buttons[GCInputRightThumbstickButton]?.pressedChangedHandler = { (button, value, pressed) in inputChangedHandler(.rightThumbstickButton, pressed) }
         
         // Menu = Primary menu button (Start/+/Menu)
         let menuButton = profile.buttons[GCInputButtonMenu]
@@ -215,7 +218,6 @@ public class MFiGameController: NSObject, GameController
                 thumbstickChangedHandler(.leftThumbstickDown, .leftThumbstickUp, value)
             }
         }
-        profile.buttons[GCInputLeftThumbstickButton]?.pressedChangedHandler = { (button, value, pressed) in inputChangedHandler(.leftThumbstickPress, pressed) }
         
         if let rightThumbstick = profile.dpads[GCInputRightThumbstick]
         {
@@ -226,7 +228,6 @@ public class MFiGameController: NSObject, GameController
                 thumbstickChangedHandler(.rightThumbstickDown, .rightThumbstickUp, value)
             }
         }
-        profile.buttons[GCInputRightThumbstickButton]?.pressedChangedHandler = { (button, value, pressed) in inputChangedHandler(.rightThumbstickPress, pressed) }
         
         let productCategory = ProductCategory(rawValue: self.controller.productCategory)
         switch productCategory
