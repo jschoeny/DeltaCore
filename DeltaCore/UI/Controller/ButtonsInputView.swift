@@ -9,12 +9,6 @@
 import UIKit
 import AVFoundation
 
-enum ButtonOverlayMode: String, CaseIterable
-{
-    case gradient
-    case ring
-}
-
 class ButtonsInputView: UIView
 {
     var isHapticFeedbackEnabled = true
@@ -276,11 +270,19 @@ private extension ButtonsInputView
         guard self.image != nil,
               let items = self.items else { return }
         
-        let touchOverlayGradient = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(), colors: [self.touchOverlayColor.withAlphaComponent(self.touchOverlayOpacity).cgColor, self.touchOverlayColor.withAlphaComponent(0.0).cgColor] as CFArray, locations: [0.3, 1.0])!
+        let touchOverlayGradient = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(), colors: [self.touchOverlayColor.withAlphaComponent(self.touchOverlayOpacity).cgColor, self.touchOverlayColor.withAlphaComponent(0.0).cgColor] as CFArray, locations: [1.0, 0.2])!
+        
+        let overlaySize = 40 * self.touchOverlaySize
+        let overlayLineWidth = 4 * self.touchOverlaySize
         
         let renderer = UIGraphicsImageRenderer(bounds: self.bounds)
         
         let overlayImage = renderer.image { (context) in
+            let cgContext = context.cgContext
+            
+            cgContext.setStrokeColor(self.touchOverlayColor.withAlphaComponent(self.touchOverlayOpacity).cgColor)
+            cgContext.setLineWidth(overlayLineWidth)
+            
             for item in items
             {
                 guard item.kind != .touchScreen, item.kind != .thumbstick else { continue }
@@ -372,7 +374,9 @@ private extension ButtonsInputView
                     
                     inputCenter.x *= self.bounds.width; inputCenter.y *= self.bounds.height
                     
-                    context.cgContext.drawRadialGradient(touchOverlayGradient, startCenter: inputCenter, startRadius: 0, endCenter: inputCenter, endRadius: 40 * self.touchOverlaySize, options: [])
+                    cgContext.drawRadialGradient(touchOverlayGradient, startCenter: inputCenter, startRadius: 0, endCenter: inputCenter, endRadius: overlaySize - (overlayLineWidth / 2), options: [])
+                    cgContext.addEllipse(in: CGRectMake(inputCenter.x - overlaySize, inputCenter.y - overlaySize, overlaySize * 2, overlaySize * 2))
+                    cgContext.drawPath(using: .stroke)
                 }
             }
         }
