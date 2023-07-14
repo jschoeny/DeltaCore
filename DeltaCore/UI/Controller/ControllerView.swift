@@ -156,6 +156,12 @@ public class ControllerView: UIView, GameController
         }
     }
     
+    public var touchOverlayStyle = ButtonOverlayStyle.bubble {
+        didSet {
+            self.buttonsView.touchOverlayStyle = self.touchOverlayStyle
+        }
+    }
+    
     public var isAltRepresentationsEnabled = true {
         didSet {
             self._useAltRepresentations = self.isAltRepresentationsEnabled

@@ -9,6 +9,18 @@
 import UIKit
 import AVFoundation
 
+public enum ButtonOverlayStyle: String, CaseIterable, CustomStringConvertible
+{
+    case bubble = "Bubble"
+    case ring = "Ring"
+    case glow = "Glow"
+    
+    public var description: String
+    {
+        return self.rawValue
+    }
+}
+
 class ButtonsInputView: UIView
 {
     var isHapticFeedbackEnabled = true
@@ -19,6 +31,7 @@ class ButtonsInputView: UIView
     var touchOverlayOpacity = 1.0
     var touchOverlaySize = 1.0
     var touchOverlayColor = UIColor.white
+    var touchOverlayStyle: ButtonOverlayStyle = .bubble
     
     var isAudioFeedbackEnabled = true
     var buttonPressedSoundID: SystemSoundID = 444
@@ -270,7 +283,9 @@ private extension ButtonsInputView
         guard self.image != nil,
               let items = self.items else { return }
         
-        let touchOverlayGradient = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(), colors: [self.touchOverlayColor.withAlphaComponent(self.touchOverlayOpacity).cgColor, self.touchOverlayColor.withAlphaComponent(0.0).cgColor] as CFArray, locations: [1.0, 0.2])!
+        let overlayBubbleGradient = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(), colors: [self.touchOverlayColor.withAlphaComponent(self.touchOverlayOpacity).cgColor, self.touchOverlayColor.withAlphaComponent(0.0).cgColor] as CFArray, locations: [1.0, 0.3])!
+        
+        let overlayGlowGradient = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(), colors: [self.touchOverlayColor.withAlphaComponent(self.touchOverlayOpacity).cgColor, self.touchOverlayColor.withAlphaComponent(0.0).cgColor] as CFArray, locations: [0.3, 1.0])!
         
         let overlaySize = 40 * self.touchOverlaySize
         let overlayLineWidth = 4 * self.touchOverlaySize
@@ -374,9 +389,18 @@ private extension ButtonsInputView
                     
                     inputCenter.x *= self.bounds.width; inputCenter.y *= self.bounds.height
                     
-                    cgContext.drawRadialGradient(touchOverlayGradient, startCenter: inputCenter, startRadius: 0, endCenter: inputCenter, endRadius: overlaySize - (overlayLineWidth / 2), options: [])
-                    cgContext.addEllipse(in: CGRectMake(inputCenter.x - overlaySize, inputCenter.y - overlaySize, overlaySize * 2, overlaySize * 2))
-                    cgContext.drawPath(using: .stroke)
+                    switch self.touchOverlayStyle
+                    {
+                    case .bubble:
+                        cgContext.drawRadialGradient(overlayBubbleGradient, startCenter: inputCenter, startRadius: 0, endCenter: inputCenter, endRadius: overlaySize - (overlayLineWidth / 2), options: [])
+                        cgContext.addEllipse(in: CGRectMake(inputCenter.x - overlaySize, inputCenter.y - overlaySize, overlaySize * 2, overlaySize * 2))
+                        cgContext.drawPath(using: .stroke)
+                    case .glow:
+                        cgContext.drawRadialGradient(overlayGlowGradient, startCenter: inputCenter, startRadius: 0, endCenter: inputCenter, endRadius: overlaySize, options: [])
+                    case .ring:
+                        cgContext.addEllipse(in: CGRectMake(inputCenter.x - overlaySize, inputCenter.y - overlaySize, overlaySize * 2, overlaySize * 2))
+                        cgContext.drawPath(using: .stroke)
+                    }
                 }
             }
         }
