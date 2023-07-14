@@ -9,18 +9,30 @@
 import UIKit
 import AVFoundation
 
+enum ButtonOverlayMode: String, CaseIterable
+{
+    case gradient
+    case ring
+}
+
 class ButtonsInputView: UIView
 {
     var isHapticFeedbackEnabled = true
     var isClickyHapticEnabled = true
-    var isTouchOverlayEnabled = true
-    var isAudioFeedbackEnabled = true
-    
     var hapticFeedbackStrength = 1.0
+    
+    var isTouchOverlayEnabled = true
     var touchOverlayOpacity = 1.0
     var touchOverlaySize = 1.0
-    
     var touchOverlayColor = UIColor.white
+    
+    var isAudioFeedbackEnabled = true
+    var buttonPressedSoundID: SystemSoundID = 444
+    var buttonPressedSoundURL: URL = URL(fileURLWithPath: "/System/Library/Audio/UISounds/Tock.caf") {
+        didSet {
+            AudioServicesCreateSystemSoundID(self.buttonPressedSoundURL as CFURL, &self.buttonPressedSoundID)
+        }
+    }
     
     var items: [ControllerSkin.Item]?
     
@@ -33,13 +45,6 @@ class ButtonsInputView: UIView
         }
         set {
             self.imageView.image = newValue
-        }
-    }
-    
-    var buttonPressedSoundID: SystemSoundID = 444
-    var buttonPressedSoundURL: URL = URL(fileURLWithPath: "/System/Library/Audio/UISounds/Tock.caf") {
-        didSet {
-            AudioServicesCreateSystemSoundID(self.buttonPressedSoundURL as CFURL, &self.buttonPressedSoundID)
         }
     }
     
@@ -268,112 +273,110 @@ private extension ButtonsInputView
     }
     
     func updateTouchOverlay() {
-        guard self.image != nil else { return }
-        guard let items = self.items else { return }
-        
-        let overlayImage: UIImage?
+        guard self.image != nil,
+              let items = self.items else { return }
         
         let touchOverlayGradient = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(), colors: [self.touchOverlayColor.withAlphaComponent(self.touchOverlayOpacity).cgColor, self.touchOverlayColor.withAlphaComponent(0.0).cgColor] as CFArray, locations: [0.3, 1.0])!
         
-        UIGraphicsBeginImageContextWithOptions(self.bounds.size, false, self.touchOverlayOpacity)
-        let context = UIGraphicsGetCurrentContext()!
+        let renderer = UIGraphicsImageRenderer(bounds: self.bounds)
         
-        for item in items
-        {
-            guard item.kind != .touchScreen, item.kind != .thumbstick else { continue }
-            
-            for touch in self.touchInputsMappingDictionary.keys
+        let overlayImage = renderer.image { (context) in
+            for item in items
             {
-                var scaledTouch = touch.location(in: self)
-                scaledTouch.x /= self.bounds.width
-                scaledTouch.y /= self.bounds.height
+                guard item.kind != .touchScreen, item.kind != .thumbstick else { continue }
                 
-                let frame = item.extendedFrame
-                
-                guard frame.contains(scaledTouch) else { continue }
-                
-                var inputCenter = CGPoint()
-                
-                switch item.inputs
+                for touch in self.touchInputsMappingDictionary.keys
                 {
-                case .directional where item.kind == .thumbstick:
-                    // thumbstick  code
-                    break
-                case .touch:
-                    // touch code
-                    break
-                case .standard:
-                    // normal button code
-                    inputCenter = self.centerPoint(rect: item.frame)
-                
-                case .directional:
-                    // calculate input rectangles for up down left right to test if touch lies within them
-                    let topRect = CGRect(x: item.extendedFrame.minX, y: item.extendedFrame.minY, width: item.extendedFrame.width, height: (item.frame.height / 3) + (item.frame.minY - item.extendedFrame.minY))
-                    let bottomRect = CGRect(x: item.extendedFrame.minX, y: item.frame.maxY - item.frame.height / 3, width: item.extendedFrame.width, height: (item.frame.height / 3) + (item.extendedFrame.maxY - item.frame.maxY))
-                    let leftRect = CGRect(x: item.extendedFrame.minX, y: item.extendedFrame.minY, width: (item.frame.width / 3) + (item.frame.minX - item.extendedFrame.minX), height: item.extendedFrame.height)
-                    let rightRect = CGRect(x: item.frame.maxX - item.frame.width / 3, y: item.extendedFrame.minY, width: (item.frame.width / 3) + (item.extendedFrame.maxX - item.frame.maxX), height: item.extendedFrame.height)
+                    var scaledTouch = touch.location(in: self)
+                    scaledTouch.x /= self.bounds.width
+                    scaledTouch.y /= self.bounds.height
                     
-                    // offset to move the corner inputs in by so they're not sticking so far out
-                    let offsetX = item.frame.width * 0.1; let offsetY = item.frame.height * 0.1
+                    let frame = item.extendedFrame
                     
-                    // determine which section of the dpad touch is in, set inputCenter to that location
-                    if topRect.contains(scaledTouch)
+                    guard frame.contains(scaledTouch) else { continue }
+                    
+                    var inputCenter = CGPoint()
+                    
+                    switch item.inputs
                     {
-                        inputCenter.y = self.centerPoint(rect: topRect).y
-                        if leftRect.contains(scaledTouch)
-                        {
-                            inputCenter.x = self.centerPoint(rect: leftRect).x + offsetX
-                            inputCenter.y += offsetY
-                        }
-                        else if rightRect.contains(scaledTouch)
-                        {
-                            inputCenter.x = self.centerPoint(rect: rightRect).x - offsetX
-                            inputCenter.y += offsetY
-                        }
-                        else
-                        {
-                            inputCenter.x = self.centerPoint(rect: item.frame).x
-                        }
-                    }
-                    else if bottomRect.contains(scaledTouch)
-                    {
-                        inputCenter.y = self.centerPoint(rect: bottomRect).y
-                        if leftRect.contains(scaledTouch)
-                        {
-                            inputCenter.x = self.centerPoint(rect: leftRect).x + offsetX
-                            inputCenter.y -= offsetY
-                        }
-                        else if rightRect.contains(scaledTouch)
-                        {
-                            inputCenter.x = self.centerPoint(rect: rightRect).x - offsetY
-                            inputCenter.y -= offsetY
-                        }
-                        else
-                        {
-                            inputCenter.x = self.centerPoint(rect: item.frame).x
-                        }
-                    }
-                    else if leftRect.contains(scaledTouch)
-                    {
-                        inputCenter = self.centerPoint(rect: leftRect)
-                    }
-                    else if rightRect.contains(scaledTouch)
-                    {
-                        inputCenter = self.centerPoint(rect: rightRect)
-                    }
-                    else
-                    {
+                    case .directional where item.kind == .thumbstick:
+                        // thumbstick  code
+                        break
+                    case .touch:
+                        // touch code
+                        break
+                    case .standard:
+                        // normal button code
                         inputCenter = self.centerPoint(rect: item.frame)
+                        
+                    case .directional:
+                        // calculate input rectangles for up down left right to test if touch lies within them
+                        let topRect = CGRect(x: item.extendedFrame.minX, y: item.extendedFrame.minY, width: item.extendedFrame.width, height: (item.frame.height / 3) + (item.frame.minY - item.extendedFrame.minY))
+                        let bottomRect = CGRect(x: item.extendedFrame.minX, y: item.frame.maxY - item.frame.height / 3, width: item.extendedFrame.width, height: (item.frame.height / 3) + (item.extendedFrame.maxY - item.frame.maxY))
+                        let leftRect = CGRect(x: item.extendedFrame.minX, y: item.extendedFrame.minY, width: (item.frame.width / 3) + (item.frame.minX - item.extendedFrame.minX), height: item.extendedFrame.height)
+                        let rightRect = CGRect(x: item.frame.maxX - item.frame.width / 3, y: item.extendedFrame.minY, width: (item.frame.width / 3) + (item.extendedFrame.maxX - item.frame.maxX), height: item.extendedFrame.height)
+                        
+                        // offset to move the corner inputs in by so they're not sticking so far out
+                        let offsetX = item.frame.width * 0.1; let offsetY = item.frame.height * 0.1
+                        
+                        // determine which section of the dpad touch is in, set inputCenter to that location
+                        if topRect.contains(scaledTouch)
+                        {
+                            inputCenter.y = self.centerPoint(rect: topRect).y
+                            if leftRect.contains(scaledTouch)
+                            {
+                                inputCenter.x = self.centerPoint(rect: leftRect).x + offsetX
+                                inputCenter.y += offsetY
+                            }
+                            else if rightRect.contains(scaledTouch)
+                            {
+                                inputCenter.x = self.centerPoint(rect: rightRect).x - offsetX
+                                inputCenter.y += offsetY
+                            }
+                            else
+                            {
+                                inputCenter.x = self.centerPoint(rect: item.frame).x
+                            }
+                        }
+                        else if bottomRect.contains(scaledTouch)
+                        {
+                            inputCenter.y = self.centerPoint(rect: bottomRect).y
+                            if leftRect.contains(scaledTouch)
+                            {
+                                inputCenter.x = self.centerPoint(rect: leftRect).x + offsetX
+                                inputCenter.y -= offsetY
+                            }
+                            else if rightRect.contains(scaledTouch)
+                            {
+                                inputCenter.x = self.centerPoint(rect: rightRect).x - offsetY
+                                inputCenter.y -= offsetY
+                            }
+                            else
+                            {
+                                inputCenter.x = self.centerPoint(rect: item.frame).x
+                            }
+                        }
+                        else if leftRect.contains(scaledTouch)
+                        {
+                            inputCenter = self.centerPoint(rect: leftRect)
+                        }
+                        else if rightRect.contains(scaledTouch)
+                        {
+                            inputCenter = self.centerPoint(rect: rightRect)
+                        }
+                        else
+                        {
+                            inputCenter = self.centerPoint(rect: item.frame)
+                        }
                     }
+                    
+                    inputCenter.x *= self.bounds.width; inputCenter.y *= self.bounds.height
+                    
+                    context.cgContext.drawRadialGradient(touchOverlayGradient, startCenter: inputCenter, startRadius: 0, endCenter: inputCenter, endRadius: 40 * self.touchOverlaySize, options: [])
                 }
-                
-                inputCenter.x *= self.bounds.width; inputCenter.y *= self.bounds.height
-                
-                context.drawRadialGradient(touchOverlayGradient, startCenter: inputCenter, startRadius: 0, endCenter: inputCenter, endRadius: 40 * self.touchOverlaySize, options: [])
             }
         }
         
-        overlayImage = UIGraphicsGetImageFromCurrentImageContext()
         self.touchOverlayView.image = overlayImage
     }
     
