@@ -33,14 +33,6 @@ class ButtonsInputView: UIView
     var touchOverlayColor = UIColor.white
     var touchOverlayStyle: ButtonOverlayStyle = .bubble
     
-    var isAudioFeedbackEnabled = true
-    var buttonPressedSoundID: SystemSoundID = 444
-    var buttonPressedSoundURL: URL = URL(fileURLWithPath: "/System/Library/Audio/UISounds/Tock.caf") {
-        didSet {
-            AudioServicesCreateSystemSoundID(self.buttonPressedSoundURL as CFURL, &self.buttonPressedSoundID)
-        }
-    }
-    
     var items: [ControllerSkin.Item]?
     
     var activateInputsHandler: ((Set<AnyInput>) -> Void)?
@@ -74,8 +66,6 @@ class ButtonsInputView: UIView
         super.init(frame: frame)
         
         self.isMultipleTouchEnabled = true
-        
-        AudioServicesCreateSystemSoundID(self.buttonPressedSoundURL as CFURL, &self.buttonPressedSoundID)
         
         self.feedbackGenerator.prepare()
         
@@ -248,11 +238,6 @@ private extension ButtonsInputView
         if !activatedInputs.isEmpty
         {
             self.activateInputsHandler?(activatedInputs)
-            
-            if self.isAudioFeedbackEnabled
-            {
-                AudioServicesPlaySystemSound(self.buttonPressedSoundID)
-            }
             
             if self.isHapticFeedbackEnabled
             {

@@ -114,24 +114,6 @@ public class ControllerView: UIView, GameController
         }
     }
     
-    public var isButtonAudioFeedbackEnabled = true {
-        didSet {
-            self.buttonsView.isAudioFeedbackEnabled = self.isButtonAudioFeedbackEnabled
-        }
-    }
-    
-    public var buttonPressedSoundID: SystemSoundID {
-        get {
-            return self.buttonsView.buttonPressedSoundID
-        }
-    }
-    
-    public var buttonPressedSoundURL: URL = URL(fileURLWithPath: "/System/Library/Audio/UISounds/Tock.caf") {
-        didSet {
-            self.buttonsView.buttonPressedSoundURL = self.buttonPressedSoundURL
-        }
-    }
-    
     public var isButtonTouchOverlayEnabled = true {
         didSet {
             self.buttonsView.isTouchOverlayEnabled = self.isButtonTouchOverlayEnabled
@@ -173,6 +155,8 @@ public class ControllerView: UIView, GameController
             self._showDebugMode = self.isDebugModeEnabled
         }
     }
+    
+    public var buttonPressedHandler: (() -> Void)?
     
     //MARK: - <GameControllerType>
     /// <GameControllerType>
@@ -800,6 +784,8 @@ private extension ControllerView
 {
     func activateButtonInputs(_ inputs: Set<AnyInput>)
     {
+        self.buttonPressedHandler?()
+        
         for input in inputs
         {
             self.activate(input)
