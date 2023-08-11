@@ -307,8 +307,13 @@ private extension ButtonsInputView
                     case .touch:
                         // touch code
                         break
+                    case .standard where item.inputs.allInputs.contains(where: { input in
+                        return input.stringValue == "toggleAltRepresentations"
+                    }):
+                        // normal button code - use touch location
+                        inputCenter = scaledTouch
                     case .standard:
-                        // normal button code
+                        // normal button code - use button location
                         inputCenter = self.centerPoint(rect: item.frame)
                         
                     case .directional:
