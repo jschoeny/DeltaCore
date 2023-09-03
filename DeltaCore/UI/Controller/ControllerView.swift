@@ -157,6 +157,7 @@ public class ControllerView: UIView, GameController
     }
     
     public var buttonPressedHandler: (() -> Void)?
+    public var buttonReleasedHandler: (() -> Void)?
     
     //MARK: - <GameControllerType>
     /// <GameControllerType>
@@ -794,6 +795,8 @@ private extension ControllerView
     
     func deactivateButtonInputs(_ inputs: Set<AnyInput>)
     {
+        self.buttonReleasedHandler?()
+        
         for input in inputs
         {
             self.deactivate(input)
