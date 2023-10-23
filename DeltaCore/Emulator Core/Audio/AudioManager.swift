@@ -227,6 +227,8 @@ public extension AudioManager
     
     func playButtonSound(_ sound: AVAudioFile)
     {
+        guard self.audioEngine.isRunning else { return }
+        
         self.buttonAudioPlayerNode.scheduleFile(sound, at: nil)
         self.buttonAudioPlayerNode.play()
     }
