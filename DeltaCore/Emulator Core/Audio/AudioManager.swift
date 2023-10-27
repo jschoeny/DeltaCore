@@ -322,7 +322,7 @@ private extension AudioManager
             guard let outputAudioFormat = AVAudioFormat(standardFormatWithSampleRate: AVAudioSession.sharedInstance().sampleRate, channels: self.audioFormat.channelCount) else { return }
             
             let inputAudioBufferFrameCount = Int(self.audioFormat.sampleRate * self.frameDuration)
-            let outputAudioBufferFrameCount = Int(outputAudioFormat.sampleRate * self.frameDuration)
+//            let outputAudioBufferFrameCount = Int(outputAudioFormat.sampleRate * self.frameDuration)
             
             // Allocate enough space to prevent us from overwriting data before we've used it.
             let ringBufferAudioBufferCount = Int((self.audioFormat.sampleRate / outputAudioFormat.sampleRate).rounded(.up) + 10.0)
@@ -340,8 +340,6 @@ private extension AudioManager
             
             self.audioEngine.disconnectNodeOutput(self.timePitchEffect)
             self.audioEngine.connect(self.timePitchEffect, to: self.audioEngine.mainMixerNode, format: outputAudioFormat)
-            
-            self.audioEngine.connect(self.buttonAudioPlayerNode, to: self.audioEngine.mainMixerNode, format: outputAudioFormat)
 
             self.audioEngine.detach(self.sourceNode)
             
@@ -364,6 +362,9 @@ private extension AudioManager
             {
                 print(error)
             }
+            
+            // Connect button audio node after starting audio engine to avoid full Ring Buffer issues
+            self.audioEngine.connect(self.buttonAudioPlayerNode, to: self.audioEngine.mainMixerNode, format: nil)
         }
     }
     
