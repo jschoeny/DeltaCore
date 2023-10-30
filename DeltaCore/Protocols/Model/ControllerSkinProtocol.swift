@@ -19,6 +19,7 @@ public protocol ControllerSkinProtocol
     func supports(_ traits: ControllerSkin.Traits, alt: Bool) -> Bool
     
     func image(for traits: ControllerSkin.Traits, preferredSize: ControllerSkin.Size, alt: Bool) -> UIImage?
+    func anyImage(for traits: ControllerSkin.Traits, preferredSize: ControllerSkin.Size, alt: Bool) -> UIImage?
     func thumbstick(for item: ControllerSkin.Item, traits: ControllerSkin.Traits, preferredSize: ControllerSkin.Size, alt: Bool) -> (UIImage, CGSize)?
     
     func items(for traits: ControllerSkin.Traits, alt: Bool) -> [ControllerSkin.Item]?
@@ -35,6 +36,7 @@ public protocol ControllerSkinProtocol
     func contentSize(for traits: ControllerSkin.Traits, alt: Bool) -> CGSize?
     
     func previewSize(for traits: ControllerSkin.Traits, alt: Bool) -> CGSize?
+    func anyPreviewSize(for traits: ControllerSkin.Traits, alt: Bool) -> CGSize?
     
     func supportedTraits(for traits: ControllerSkin.Traits, alt: Bool) -> ControllerSkin.Traits?
 }

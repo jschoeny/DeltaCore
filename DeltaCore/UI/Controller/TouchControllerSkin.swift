@@ -49,6 +49,11 @@ extension TouchControllerSkin: ControllerSkinProtocol
         return nil
     }
     
+    public func anyImage(for traits: ControllerSkin.Traits, preferredSize: ControllerSkin.Size, alt: Bool = false) -> UIImage?
+    {
+        return nil
+    }
+    
     public func thumbstick(for item: ControllerSkin.Item, traits: ControllerSkin.Traits, preferredSize: ControllerSkin.Size, alt: Bool = false) -> (UIImage, CGSize)?
     {
         return nil
@@ -133,6 +138,10 @@ extension TouchControllerSkin: ControllerSkinProtocol
     }
     
     public func previewSize(for traits: ControllerSkin.Traits, alt: Bool = false) -> CGSize? {
+        return self.controllerSkin.previewSize(for: traits, alt: alt)
+    }
+    
+    public func anyPreviewSize(for traits: ControllerSkin.Traits, alt: Bool = false) -> CGSize? {
         return self.controllerSkin.previewSize(for: traits, alt: alt)
     }
 }

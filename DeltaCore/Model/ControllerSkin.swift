@@ -351,6 +351,39 @@ public extension ControllerSkin
         return returnedImage
     }
     
+    func anyImage(for traits: Traits, preferredSize: Size, alt: Bool = false) -> UIImage?
+    {
+        var skinFound: Bool = false
+        var tempTraits = traits
+        
+        if let traits = self.supportedTraits(for: traits, alt: alt)
+        {
+            tempTraits = traits
+        }
+        else
+        {
+            for device in Device.allCases
+            {
+                for displayType in DisplayType.allCases
+                {
+                    tempTraits.device = device
+                    tempTraits.displayType = displayType
+                    
+                    if let traits = self.supportedTraits(for: tempTraits, alt: alt)
+                    {
+                        tempTraits = traits
+                        skinFound = true
+                        break
+                    }
+                }
+                
+                if skinFound { break }
+            }
+        }
+        
+        return self.image(for: tempTraits, preferredSize: preferredSize, alt: alt)
+    }
+    
     func items(for traits: Traits, alt: Bool = false) -> [Item]?
     {
         guard let representation = self.representation(for: traits, alt: alt) else { return nil }
@@ -421,6 +454,39 @@ public extension ControllerSkin
         let size = CGSize(width: returnedImage?.size.width ?? 300, height: returnedImage?.size.height ?? 300)
         
         return size
+    }
+    
+    func anyPreviewSize(for traits: Traits, alt: Bool = false) -> CGSize?
+    {
+        var skinFound: Bool = false
+        var tempTraits = traits
+        
+        if let traits = self.supportedTraits(for: traits, alt: alt)
+        {
+            tempTraits = traits
+        }
+        else
+        {
+            for device in Device.allCases
+            {
+                for displayType in DisplayType.allCases
+                {
+                    tempTraits.device = device
+                    tempTraits.displayType = displayType
+                    
+                    if let traits = self.supportedTraits(for: tempTraits, alt: alt)
+                    {
+                        tempTraits = traits
+                        skinFound = true
+                        break
+                    }
+                }
+                
+                if skinFound { break }
+            }
+        }
+        
+        return self.previewSize(for: tempTraits, alt: alt)
     }
 }
 
