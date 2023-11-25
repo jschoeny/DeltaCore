@@ -77,14 +77,29 @@ public extension StandardGameControllerInput
             return input
         }
         
-        guard
-            let deltaCore = Delta.core(for: gameType),
-            let fileURL = deltaCore.resourceBundle.url(forResource: "Standard", withExtension: "deltamapping")
-        else { fatalError("Cannot find Standard.deltamapping for game type \(gameType)") }
+        guard let deltaCore = Delta.core(for: gameType) else {
+            fatalError("Cannot find Standard.deltamapping for game type \(gameType)")
+        }
+        
+        var fileURL: URL? = nil
+        
+        // Check for secondary system skins first
+        if let url = deltaCore.resourceBundle.url(forResource: "Standard-" + deltaCore.identifier, withExtension: "deltamapping")
+        {
+            fileURL = url
+        }
+        else if let url = deltaCore.resourceBundle.url(forResource: "Standard", withExtension: "deltamapping")
+        {
+            fileURL = url
+        }
+        
+        guard let unwrappedFileURL = fileURL else {
+            fatalError("Cannot find Standard.deltamapping for game type \(gameType)")
+        }
         
         do
         {
-            let inputMapping = try GameControllerInputMapping(fileURL: fileURL)
+            let inputMapping = try GameControllerInputMapping(fileURL: unwrappedFileURL)
             StandardGameControllerInput.inputMappings[gameType] = inputMapping
             
             let input = inputMapping.input(forControllerInput: self)

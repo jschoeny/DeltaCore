@@ -215,12 +215,13 @@ public extension ControllerSkin
     {
         guard let deltaCore = Delta.core(for: gameType) else { return nil }
         
-        if let fileURL = deltaCore.resourceBundle.url(forResource: "Standard", withExtension: "ignitedskin")
+        // Check for secondary system skins first
+        if let fileURL = deltaCore.resourceBundle.url(forResource: "Standard-\(deltaCore.identifier)", withExtension: "ignitedskin")
         {
             let controllerSkin = ControllerSkin(fileURL: fileURL)
             return controllerSkin
         }
-        else if let fileURL = deltaCore.resourceBundle.url(forResource: "Standard", withExtension: "deltaskin")
+        else if let fileURL = deltaCore.resourceBundle.url(forResource: "Standard", withExtension: "ignitedskin")
         {
             let controllerSkin = ControllerSkin(fileURL: fileURL)
             return controllerSkin
