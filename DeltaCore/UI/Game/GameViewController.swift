@@ -391,7 +391,8 @@ open class GameViewController: UIViewController, GameControllerReceiver
             {
                 if screen.id == self.blurScreen.id
                 {
-                    gameView.frame = availableGameFrame
+                    let adjustedGameFrame = CGRect(x: -5, y: -5, width: availableGameFrame.width + 10, height: availableGameFrame.height + 10)
+                    gameView.frame = adjustedGameFrame
                 }
                 else
                 {
@@ -492,7 +493,7 @@ extension GameViewController
         let scaleFilter = CIFilter(name: "CIAffineTransform", parameters: ["inputTransform": NSValue(cgAffineTransform: scaleTransform)])!
         filters.append(scaleFilter)
         
-        let blurRadius = self.blurScreenStrength * 10 * blurScale * stretchFactor
+        let blurRadius = self.blurScreenStrength * 16 * blurScale * stretchFactor
         let blurFilter = CIFilter(name: "CIGaussianBlur", parameters: ["inputRadius": blurRadius])!
         filters.append(blurFilter)
         
