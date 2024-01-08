@@ -53,6 +53,4 @@ public protocol EmulatorBridging: NSObjectProtocol
     @discardableResult func addCheatCode(_ cheatCode: String, type: String) -> Bool
     func resetCheats()
     func updateCheats()
-    
-    func updatePalette()
 }
