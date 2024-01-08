@@ -17,10 +17,16 @@ internal extension AVAudioFormat
 
 private extension AVAudioSession
 {
-    func setDeltaCategory() throws
+    func setIgnitedCategory(_ micEnabled: Bool = false) throws
     {
-        try AVAudioSession.sharedInstance().setCategory(.playAndRecord,
-                                                        options: [.mixWithOthers, .allowBluetoothA2DP, .allowAirPlay])
+        if micEnabled
+        {
+            try AVAudioSession.sharedInstance().setCategory(.playAndRecord, options: [.mixWithOthers, .allowBluetoothA2DP, .allowAirPlay])
+        }
+        else
+        {
+            try AVAudioSession.sharedInstance().setCategory(.playback, options: [.mixWithOthers, .allowBluetoothA2DP])
+        }
     }
 }
 
@@ -93,6 +99,19 @@ public class AudioManager: NSObject, AudioRendering
         }
     }
     
+    public var isMicEnabled: Bool = false {
+        didSet {
+            do
+            {
+                try AVAudioSession.sharedInstance().setIgnitedCategory(self.isMicEnabled)
+            }
+            catch
+            {
+                print(error)
+            }
+        }
+    }
+    
     public private(set) var audioBuffer: RingBuffer
     
     public internal(set) var rate = 1.0 {
@@ -160,7 +179,7 @@ public class AudioManager: NSObject, AudioRendering
         do
         {
             // Set category before configuring AVAudioEngine to prevent pausing any currently playing audio from another app.
-            try AVAudioSession.sharedInstance().setDeltaCategory()
+            try AVAudioSession.sharedInstance().setIgnitedCategory(self.isMicEnabled)
         }
         catch
         {
@@ -199,7 +218,15 @@ public extension AudioManager
         
         do
         {
-            try AVAudioSession.sharedInstance().setDeltaCategory()
+            try AVAudioSession.sharedInstance().setIgnitedCategory(self.isMicEnabled)
+        }
+        catch
+        {
+            print(error)
+        }
+        
+        do
+        {
             try AVAudioSession.sharedInstance().setPreferredIOBufferDuration(0.005)
             try AVAudioSession.sharedInstance().setAllowHapticsAndSystemSoundsDuringRecording(true)
             try AVAudioSession.sharedInstance().setActive(true)
