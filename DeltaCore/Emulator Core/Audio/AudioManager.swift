@@ -25,7 +25,7 @@ private extension AVAudioSession
         }
         else
         {
-            try AVAudioSession.sharedInstance().setCategory(.playback, options: [.mixWithOthers, .allowBluetoothA2DP])
+            try AVAudioSession.sharedInstance().setCategory(.playback, options: [.mixWithOthers])
         }
     }
 }
