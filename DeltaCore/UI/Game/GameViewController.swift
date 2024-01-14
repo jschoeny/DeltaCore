@@ -107,7 +107,6 @@ open class GameViewController: UIViewController, GameControllerReceiver
         }
     }
     public var blurScreenKeepAspect: Bool = true
-    public var blurScreenOverride: Bool = false
     public var blurScreenStrength: CGFloat = 1
     public var blurScreenBrightness: CGFloat = 0
     
@@ -470,7 +469,7 @@ extension GameViewController
 {
     func updateBlurScreen()
     {
-        guard self.shouldDisplayBackgroundBlur() else {
+        guard self.blurScreenEnabled else {
             self.blurScreen.filters = nil
             return
         }
@@ -695,7 +694,7 @@ public extension GameViewController
               var screens = controllerSkin.screens(for: traits, alt: self.controllerView.isAltRepresentationsEnabled)
         else
         {
-            if self.shouldDisplayBackgroundBlur()
+            if self.blurScreenEnabled
             {
                 return self.blurScreenInFront ? [self.mainScreen, self.blurScreen] : [self.blurScreen, self.mainScreen]
             }
@@ -707,7 +706,7 @@ public extension GameViewController
         
         guard traits.displayType == .splitView else {
             // When not in split view, manage all game views regardless of placement.
-            if self.shouldDisplayBackgroundBlur()
+            if self.blurScreenEnabled
             {
                 if self.blurScreenInFront
                 {
@@ -734,25 +733,6 @@ public extension GameViewController
         }
         
         return screens
-    }
-    
-    func shouldDisplayBackgroundBlur() -> Bool
-    {
-        if self.blurScreenOverride
-        {
-            return self.blurScreenEnabled
-        }
-        else
-        {
-            if let skinSetting = self.controllerView.backgroundBlur
-            {
-                return skinSetting
-            }
-            else
-            {
-                return self.blurScreenEnabled
-            }
-        }
     }
 }
 
