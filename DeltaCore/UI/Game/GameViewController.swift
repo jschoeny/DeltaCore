@@ -384,7 +384,7 @@ open class GameViewController: UIViewController, GameControllerReceiver
         }
         
         /* Game Views */
-        if let traits = self.controllerView.controllerSkinTraits, let screens = self.screens(for: traits), !self.controllerView.isHidden
+        if let traits = self.controllerView.controllerSkinTraits, let screens = self.screens(for: traits)
         {
             for (screen, gameView) in zip(screens, self.gameViews)
             {
@@ -526,7 +526,7 @@ extension GameViewController
         var previousGameViews = Array(self.gameViews.reversed())
         var gameViews = [GameView]()
         
-        if let traits = self.controllerView.controllerSkinTraits, let screens = self.screens(for: traits), !self.controllerView.isHidden
+        if let traits = self.controllerView.controllerSkinTraits, let screens = self.screens(for: traits)
         {
             for screen in screens
             {
@@ -691,7 +691,8 @@ public extension GameViewController
     {
         guard let controllerSkin = self.controllerView.controllerSkin,
               let traits = self.controllerView.controllerSkinTraits,
-              var screens = controllerSkin.screens(for: traits, alt: self.controllerView.isAltRepresentationsEnabled)
+              var screens = controllerSkin.screens(for: traits, alt: self.controllerView.isAltRepresentationsEnabled),
+              !self.controllerView.isHidden
         else
         {
             if self.blurScreenEnabled
