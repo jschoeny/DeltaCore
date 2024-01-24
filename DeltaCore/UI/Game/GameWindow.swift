@@ -12,7 +12,7 @@ public class GameWindow: UIWindow
 {
     override open func _restoreFirstResponder()
     {
-        guard #available(iOS 16, *), let firstResponder = self._lastFirstResponder else { return super._restoreFirstResponder() }
+        guard let firstResponder = self._lastFirstResponder else { return super._restoreFirstResponder() }
                 
         if firstResponder is ControllerView
         {

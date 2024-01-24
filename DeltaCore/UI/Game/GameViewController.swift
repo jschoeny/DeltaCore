@@ -766,7 +766,7 @@ private extension GameViewController
     {
         guard let scene = notification.object as? UIWindowScene, scene == self.view.window?.windowScene else { return }
                         
-        if #available(iOS 16, *), self.isEnteringForeground
+        if self.isEnteringForeground
         {
             // HACK: When returning from background, scene.hasKeyboardFocus may not be accurate when this method is called.
             // As a workaround, we wait an extra 0.5 seconds after becoming active before checking keyboard focus.
@@ -834,7 +834,7 @@ private extension GameViewController
         let relativeHeight = appFrame.maxY - systemKeyboardFrame.minY
         
         let isLocalKeyboard = notification.userInfo?[UIResponder.keyboardIsLocalUserInfoKey] as? Bool ?? false
-        if #available(iOS 16, *), let scene = self.view.window?.windowScene, scene.isStageManagerEnabled, !isLocalKeyboard
+        if let scene = self.view.window?.windowScene, scene.isStageManagerEnabled, !isLocalKeyboard
         {
             self.splitViewInputViewHeight = 0
         }
@@ -891,13 +891,9 @@ private extension GameViewController
     {
         guard let scene = notification.object as? UIWindowScene, scene == self.view.window?.windowScene else { return }
         
-        if #available(iOS 16, *)
-        {
-            // HACK: iOS 16 beta 5 sends multiple incorrect keyboard focus notifications when resuming from background.
-            // As a workaround, we just ignore all of them until after becoming active.
-            guard !self.isEnteringForeground else { return }
-        }
-        else if !scene.hasKeyboardFocus && scene.activationState == .foregroundActive
+        guard !self.isEnteringForeground else { return }
+        
+        if !scene.hasKeyboardFocus && scene.activationState == .foregroundActive
         {
             // Explicitly resign first responder to prevent emulation resuming automatically when not frontmost app.
             self.controllerView.resignFirstResponder()

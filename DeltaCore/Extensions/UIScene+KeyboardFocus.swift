@@ -72,7 +72,7 @@ private extension UIScene
     
     @objc func didLoseKeyboardFocus(_ notification: Notification)
     {
-        if #available(iOS 16, *), let windowScene = self as? UIWindowScene, windowScene.isStageManagerEnabled
+        if let windowScene = self as? UIWindowScene, windowScene.isStageManagerEnabled
         {
             // Stage Manager is enabled, so listen for all keyboard change notifications.
         }

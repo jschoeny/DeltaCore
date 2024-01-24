@@ -420,14 +420,7 @@ extension ControllerView
     }
     
     public override var next: UIResponder? {
-        if #available(iOS 15, *)
-        {
-            return super.next
-        }
-        else
-        {
-            return KeyboardResponder(nextResponder: super.next)
-        }
+        return super.next
     }
     
     public override var inputView: UIView? {
@@ -453,10 +446,7 @@ extension ControllerView
     {
         let keyCommand = super._keyCommand(for: event, target: target)
         
-        if #available(iOS 15, *)
-        {
-            _ = self.keyboardResponder._keyCommand(for: event, target: target)
-        }
+        _ = self.keyboardResponder._keyCommand(for: event, target: target)
         
         return keyCommand
     }
