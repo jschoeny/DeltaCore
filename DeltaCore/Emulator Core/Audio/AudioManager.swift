@@ -135,7 +135,6 @@ public class AudioManager: NSObject, AudioRendering
     
     private let audioEngine: AVAudioEngine
     private let audioPlayerNode: AVAudioPlayerNode
-    private let buttonAudioPlayerNode: AVAudioPlayerNode
     private let timePitchEffect: AVAudioUnitTimePitch
     
     private var sourceNode: AVAudioSourceNode {
@@ -191,9 +190,6 @@ public class AudioManager: NSObject, AudioRendering
         self.audioPlayerNode = AVAudioPlayerNode()
         self.audioEngine.attach(self.audioPlayerNode)
         
-        self.buttonAudioPlayerNode = AVAudioPlayerNode()
-        self.audioEngine.attach(self.buttonAudioPlayerNode)
-        
         self.timePitchEffect = AVAudioUnitTimePitch()
         self.audioEngine.attach(self.timePitchEffect)
         
@@ -245,19 +241,10 @@ public extension AudioManager
         
         self.renderingQueue.sync {
             self.audioPlayerNode.stop()
-            self.buttonAudioPlayerNode.stop()
             self.audioEngine.stop()
         }
         
         self.audioBuffer.isEnabled = false
-    }
-    
-    func playButtonSound(_ sound: AVAudioFile)
-    {
-        guard self.audioEngine.isRunning else { return }
-        
-        self.buttonAudioPlayerNode.scheduleFile(sound, at: nil)
-        self.buttonAudioPlayerNode.play()
     }
 }
 
@@ -344,7 +331,6 @@ private extension AudioManager
     {
         self.renderingQueue.sync {
             self.audioPlayerNode.reset()
-            self.buttonAudioPlayerNode.reset()
             
             guard let outputAudioFormat = AVAudioFormat(standardFormatWithSampleRate: AVAudioSession.sharedInstance().sampleRate, channels: self.audioFormat.channelCount) else { return }
             
@@ -389,9 +375,6 @@ private extension AudioManager
             {
                 print(error)
             }
-            
-            // Connect button audio node after starting audio engine to avoid full Ring Buffer issues
-            self.audioEngine.connect(self.buttonAudioPlayerNode, to: self.audioEngine.mainMixerNode, format: nil)
         }
     }
     
