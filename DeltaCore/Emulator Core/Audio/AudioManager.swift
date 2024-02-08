@@ -99,6 +99,12 @@ public class AudioManager: NSObject, AudioRendering
         }
     }
     
+    public var mutedByFastForward: Bool = false {
+        didSet {
+            self.updateOutputVolume()
+        }
+    }
+    
     public var isMicEnabled: Bool = false {
         didSet {
             do
@@ -380,7 +386,7 @@ private extension AudioManager
     
     @objc func updateOutputVolume()
     {
-        if !self.isEnabled
+        if !self.isEnabled || self.mutedByFastForward
         {
             self.audioEngine.mainMixerNode.outputVolume = 0.0
         }
