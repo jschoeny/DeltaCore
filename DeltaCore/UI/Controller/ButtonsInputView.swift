@@ -355,7 +355,7 @@ private extension ButtonsInputView
                             }
                             else if rightRect.contains(scaledTouch)
                             {
-                                inputCenter.x = self.centerPoint(rect: rightRect).x - offsetY
+                                inputCenter.x = self.centerPoint(rect: rightRect).x - offsetX
                                 inputCenter.y -= offsetY
                             }
                             else
