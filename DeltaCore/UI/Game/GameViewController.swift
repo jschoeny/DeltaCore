@@ -470,15 +470,13 @@ extension GameViewController
     func updateBlurScreen()
     {
         guard self.blurScreenEnabled else {
-            self.blurScreen.filters = nil
             return
         }
         
-        //TODO: Fix background blur on genesis. Below code fixes it when rotating, but breaks it on resuming all other consoles
-        //if let inputExtent = self.gameView.inputImage?.extent
-        //{
-        //    self.screenSize = CGSize(width: inputExtent.width, height: inputExtent.height)
-        //}
+        if let inputExtent = self.gameView.inputImage?.extent
+        {
+            self.screenSize = CGSize(width: inputExtent.width, height: inputExtent.height)
+        }
         
         var filters: [CIFilter] = []
         
