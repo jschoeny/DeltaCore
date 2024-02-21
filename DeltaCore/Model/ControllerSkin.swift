@@ -605,6 +605,27 @@ extension ControllerSkin
         fileprivate var thumbstickImageName: String?
         fileprivate var thumbstickSize: CGSize?
         
+        public init(id: String, kind: Item.Kind, inputs: Item.Inputs, frame: CGRect, edges: [String: CGFloat], mappingSize: CGSize)
+        {
+            let scaleTransform = CGAffineTransform(scaleX: 1.0 / mappingSize.width, y: 1.0 / mappingSize.height)
+            
+            self.id = id
+            self.kind = kind
+            self.inputs = inputs
+            self.frame = frame.applying(scaleTransform)
+            
+            let extendedEdges = ExtendedEdges(dictionary: edges)
+            var extendedFrame = frame
+            
+            extendedFrame.origin.x -= extendedEdges.left ?? 0
+            extendedFrame.origin.y -= extendedEdges.top ?? 0
+            extendedFrame.size.width += (extendedEdges.left ?? 0) + (extendedEdges.right ?? 0)
+            extendedFrame.size.height += (extendedEdges.top ?? 0) + (extendedEdges.bottom ?? 0)
+            
+            self.extendedFrame = extendedFrame.applying(scaleTransform)
+            self.placement = .controller
+        }
+        
         fileprivate init?(id: String, dictionary: [String: AnyObject], extendedEdges: ExtendedEdges, mappingSize: CGSize)
         {
             guard
