@@ -54,6 +54,16 @@ extension ControllerSkin
         public var placement: Placement = .controller
         
         public var isTouchScreen: Bool = false
+        
+        public init(id: String, inputFrame: CGRect? = nil, outputFrame: CGRect? = nil, filters: [CIFilter]? = nil, placement: Placement = .controller, isTouchScreen: Bool = false)
+        {
+            self.id = id
+            self.inputFrame = inputFrame
+            self.outputFrame = outputFrame
+            self.filters = filters
+            self.placement = placement
+            self.isTouchScreen = isTouchScreen
+        }
     }
 }
 
