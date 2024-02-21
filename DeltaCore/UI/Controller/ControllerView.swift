@@ -731,6 +731,11 @@ public extension ControllerView
         
         self.contentView.alpha = self._isCurrentSkinTranslucent ? self.translucentControllerSkinOpacity : 1.0
     }
+    
+    func invalidateImageCache()
+    {
+        self.imageCache.removeAllObjects()
+    }
 }
 
 private extension ControllerView
