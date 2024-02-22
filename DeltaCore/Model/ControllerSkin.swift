@@ -605,12 +605,19 @@ extension ControllerSkin
         fileprivate var thumbstickImageName: String?
         fileprivate var thumbstickSize: CGSize?
         
-        public init(id: String, kind: Item.Kind, inputs: Item.Inputs, frame: CGRect, edges: [String: CGFloat], mappingSize: CGSize)
+        public init(id: String, kind: Item.Kind, inputs: Item.Inputs, frame: CGRect, edges: [String: CGFloat], mappingSize: CGSize, thumbstickSize: CGSize? = nil)
         {
             let scaleTransform = CGAffineTransform(scaleX: 1.0 / mappingSize.width, y: 1.0 / mappingSize.height)
             
             self.id = id
             self.kind = kind
+            
+            if kind == .thumbstick
+            {
+                self.thumbstickImageName = ""
+                self.thumbstickSize = thumbstickSize?.applying(scaleTransform)
+            }
+            
             self.inputs = inputs
             self.frame = frame.applying(scaleTransform)
             
