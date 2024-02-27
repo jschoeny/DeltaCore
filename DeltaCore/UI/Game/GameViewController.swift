@@ -89,32 +89,28 @@ open class GameViewController: UIViewController, GameControllerReceiver
         return self.gameViews.first
     }
     public private(set) var gameViews: [GameView] = []
+    public var blurGameView = GameView(frame: .zero)
     
-    private var screenSize: CGSize = CGSize()
-    private var availableGameFrame: CGRect = CGRect()
+    private var blurGameViewBlurView: UIVisualEffectView!
+
+    private var blurScreen: ControllerSkin.Screen! = ControllerSkin.Screen(id: "gameViewController.screen.blur", placement: .app)
     
-    private let mainScreen: ControllerSkin.Screen! = ControllerSkin.Screen(id: "gameViewController.screen.main", inputFrame: nil, outputFrame: nil, filters: nil, placement: .app)
-    private var blurScreen: ControllerSkin.Screen! = ControllerSkin.Screen(id: "gameViewController.screen.blur", inputFrame: nil, outputFrame: nil, filters: nil, placement: .app)
-    
-    public var blurScreenEnabled: Bool = false {
-        didSet {
-            self.updateGameViews()
-        }
-    }
-    public var blurScreenInFront: Bool = false {
-        didSet {
-            self.updateGameViews()
-        }
-    }
     public var blurScreenKeepAspect: Bool = true
-    public var blurScreenStrength: CGFloat = 1
-    public var blurScreenBrightness: CGFloat = 0
+    public var blurScreenEnabled: Bool = true {
+        didSet {
+            self.blurGameView.isHidden = !self.blurScreenEnabled
+            self.blurGameViewBlurView.isHidden = !self.blurScreenEnabled
+        }
+    }
     
     public var backgroundColor: UIColor = .black {
         didSet {
             self.view.backgroundColor = self.backgroundColor
         }
     }
+    
+    private var screenSize: CGSize = CGSize()
+    private var availableGameFrame: CGRect = CGRect()
         
     open private(set) var controllerView: ControllerView!
     private var splitViewInputViewHeight: CGFloat = 0
@@ -193,6 +189,14 @@ open class GameViewController: UIViewController, GameControllerReceiver
         
         self.appPlacementLayoutGuide = UILayoutGuide()
         self.view.addLayoutGuide(self.appPlacementLayoutGuide)
+        
+        self.view.addSubview(self.blurGameView)
+        
+        self.blurGameViewBlurView = UIVisualEffectView(effect: UIBlurEffect(style: .systemThinMaterial))
+        self.blurGameViewBlurView.frame = CGRect(x: 0, y: 0, width: self.view.bounds.width, height: self.view.bounds.height)
+        self.blurGameViewBlurView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        
+        self.view.addSubview(self.blurGameViewBlurView)
         
         let gameView = GameView(frame: CGRect.zero)
         self.view.addSubview(gameView)
@@ -388,31 +392,23 @@ open class GameViewController: UIViewController, GameControllerReceiver
         {
             for (screen, gameView) in zip(screens, self.gameViews)
             {
-                if screen.id == self.blurScreen.id
+                let placementFrame = (screen.placement == .controller) ? controllerViewFrame : appPlacementFrame
+                
+                if let outputFrame = screen.outputFrame
                 {
-                    let adjustedGameFrame = CGRect(x: -5, y: -5, width: availableGameFrame.width + 10, height: availableGameFrame.height + 10)
-                    gameView.frame = adjustedGameFrame
+                    let frame = outputFrame.scaled(to: placementFrame)
+                    gameView.frame = frame
                 }
                 else
                 {
-                    let placementFrame = (screen.placement == .controller) ? controllerViewFrame : appPlacementFrame
+                    // Nil outputFrame, so use gameView.outputImage's aspect ratio to determine default positioning.
+                    // We check outputImage before inputFrame because we prefer to keep aspect ratio of whatever is currently being displayed.
+                    // Otherwise, screen may resize to screenAspectRatio while still displaying partial content, appearing distorted.
+                    let aspectRatio = gameView.outputImage?.extent.size ?? screen.inputFrame?.size ?? gameScreenDimensions
+                    let containerFrame = (screen.placement == .controller) ? controllerViewFrame : availableGameFrame
                     
-                    if let outputFrame = screen.outputFrame
-                    {
-                        let frame = outputFrame.scaled(to: placementFrame)
-                        gameView.frame = frame
-                    }
-                    else
-                    {
-                        // Nil outputFrame, so use gameView.outputImage's aspect ratio to determine default positioning.
-                        // We check outputImage before inputFrame because we prefer to keep aspect ratio of whatever is currently being displayed.
-                        // Otherwise, screen may resize to screenAspectRatio while still displaying partial content, appearing distorted.
-                        let aspectRatio = gameView.outputImage?.extent.size ?? screen.inputFrame?.size ?? gameScreenDimensions
-                        let containerFrame = (screen.placement == .controller) ? controllerViewFrame : availableGameFrame
-                        
-                        let screenFrame = AVMakeRect(aspectRatio: aspectRatio, insideRect: containerFrame)
-                        gameView.frame = screenFrame
-                    }
+                    let screenFrame = AVMakeRect(aspectRatio: aspectRatio, insideRect: containerFrame)
+                    gameView.frame = screenFrame
                 }
             }
         }
@@ -421,6 +417,8 @@ open class GameViewController: UIViewController, GameControllerReceiver
             let gameScreenFrame = AVMakeRect(aspectRatio: gameScreenDimensions, insideRect: availableGameFrame)
             self.gameView.frame = gameScreenFrame
         }
+        
+        self.blurGameView.frame = availableGameFrame
         
         if let emulatorCore = self.emulatorCore, emulatorCore.state != .running
         {
@@ -480,41 +478,20 @@ extension GameViewController
         
         var filters: [CIFilter] = []
         
-        let stretchX = self.availableGameFrame.width / self.screenSize.width
-        let stretchY = self.availableGameFrame.height / self.screenSize.height
-        let stretchFactor = 2 / max(stretchX, stretchY)
-        
-        let blurScale: CGFloat = (stretchFactor < 1) ? 2 : 1
-        
-        let scaleTransform = CGAffineTransform(scaleX: blurScale, y: blurScale)
-        let scaleFilter = CIFilter(name: "CIAffineTransform", parameters: ["inputTransform": NSValue(cgAffineTransform: scaleTransform)])!
-        filters.append(scaleFilter)
-        
-        let blurRadius = self.blurScreenStrength * 16 * blurScale * stretchFactor
-        let blurFilter = CIFilter(name: "CIGaussianBlur", parameters: ["inputRadius": blurRadius])!
-        filters.append(blurFilter)
-        
-        var adjustedSize = CGRect(x: blurRadius * 4,
-                                  y: blurRadius * 4,
-                                  width: self.screenSize.width * blurScale - (blurRadius * 2),
-                                  height: self.screenSize.height * blurScale - (blurRadius * 2))
-        
         if self.blurScreenKeepAspect
         {
-            let availableGameRect = CGSize(width: self.availableGameFrame.width, height: self.availableGameFrame.height)
-            adjustedSize = AVMakeRect(aspectRatio: availableGameRect, insideRect: adjustedSize)
-        }
-        
-        let cropFilter = CIFilter(name: "CICrop", parameters: ["inputRectangle": CIVector(cgRect: adjustedSize)])!
-        filters.append(cropFilter)
-        
-        if self.blurScreenBrightness != 0
-        {
-            let brightnessFilter = CIFilter(name: "CIColorControls", parameters: ["inputBrightness": self.blurScreenBrightness])!
-            filters.append(brightnessFilter)
+            let availableGameSize = CGSize(width: self.availableGameFrame.width, height: self.availableGameFrame.height)
+            let gameRect = CGRect(origin: .zero, size: self.screenSize)
+            
+            let cropFrame = AVMakeRect(aspectRatio: availableGameSize, insideRect: gameRect)
+            let cropFilter = CIFilter(name: "CICrop", parameters: ["inputRectangle": CIVector(cgRect: cropFrame)])!
+            
+            filters.append(cropFilter)
         }
         
         self.blurScreen.filters = filters
+        
+        self.blurGameView.update(for: self.blurScreen)
     }
     
     @objc func updateGameViews()
@@ -653,7 +630,10 @@ private extension GameViewController
             let game = self.game
         else { return }
         
-        for gameView in self.gameViews + controllerView.gameViews
+        var gameViews = self.gameViews + controllerView.gameViews
+        gameViews.append(self.blurGameView)
+        
+        for gameView in gameViews
         {
             emulatorCore.add(gameView)
         }
@@ -693,30 +673,11 @@ public extension GameViewController
               !self.controllerView.isHidden
         else
         {
-            if self.blurScreenEnabled
-            {
-                return self.blurScreenInFront ? [self.mainScreen, self.blurScreen] : [self.blurScreen, self.mainScreen]
-            }
-            else
-            {
-                return nil
-            }
+            return nil
         }
         
         guard traits.displayType == .splitView else {
             // When not in split view, manage all game views regardless of placement.
-            if self.blurScreenEnabled
-            {
-                if self.blurScreenInFront
-                {
-                    screens.append(self.blurScreen)
-                }
-                else
-                {
-                    screens.insert(self.blurScreen, at: 0)
-                }
-            }
-            
             return screens
         }
         
