@@ -91,15 +91,21 @@ open class GameViewController: UIViewController, GameControllerReceiver
     public private(set) var gameViews: [GameView] = []
     public var blurGameView = GameView(frame: .zero)
     
-    private var blurGameViewBlurView: UIVisualEffectView!
+    public var blurGameViewBlurView: UIVisualEffectView!
+    public var blurTintView: UIView = UIView(frame: .zero)
 
     private var blurScreen: ControllerSkin.Screen! = ControllerSkin.Screen(id: "gameViewController.screen.blur", placement: .app)
     
-    public var blurScreenKeepAspect: Bool = true
+    public var blurScreenKeepAspect: Bool = true {
+        didSet {
+            self.updateBlurScreen()
+        }
+    }
     public var blurScreenEnabled: Bool = true {
         didSet {
             self.blurGameView.isHidden = !self.blurScreenEnabled
             self.blurGameViewBlurView.isHidden = !self.blurScreenEnabled
+            self.blurTintView.isHidden = !self.blurScreenEnabled
         }
     }
     
@@ -191,6 +197,8 @@ open class GameViewController: UIViewController, GameControllerReceiver
         self.view.addLayoutGuide(self.appPlacementLayoutGuide)
         
         self.view.addSubview(self.blurGameView)
+        
+        self.view.addSubview(self.blurTintView)
         
         self.blurGameViewBlurView = UIVisualEffectView(effect: UIBlurEffect(style: .systemThinMaterial))
         self.blurGameViewBlurView.frame = CGRect(x: 0, y: 0, width: self.view.bounds.width, height: self.view.bounds.height)
@@ -419,6 +427,7 @@ open class GameViewController: UIViewController, GameControllerReceiver
         }
         
         self.blurGameView.frame = availableGameFrame
+        self.blurTintView.frame = availableGameFrame
         
         if let emulatorCore = self.emulatorCore, emulatorCore.state != .running
         {
