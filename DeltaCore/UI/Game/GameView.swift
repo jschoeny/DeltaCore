@@ -33,6 +33,12 @@ public enum SamplerMode
     case nearestNeighbor
 }
 
+public enum GameViewStyle: String, CaseIterable
+{
+    case flat = "Flat"
+    case floating = "Floating"
+}
+
 public class GameView: UIView
 {
     public var isEnabled: Bool = true
@@ -60,6 +66,12 @@ public class GameView: UIView
     public var samplerMode: SamplerMode = .nearestNeighbor {
         didSet {
             self.update()
+        }
+    }
+    
+    public var style: GameViewStyle = .flat {
+        didSet {
+            self.updateStyle()
         }
     }
     
@@ -143,6 +155,15 @@ public class GameView: UIView
         self.glkView.delegate = self.glkViewDelegate
         self.glkView.enableSetNeedsDisplay = false
         self.addSubview(self.glkView)
+        
+        self.glkView.clipsToBounds = true
+        
+        self.layer.shadowColor = UIColor.black.cgColor
+        self.layer.shadowOffset = CGSize(width: 0, height: 3)
+        self.layer.shadowRadius = 9
+        self.layer.shadowOpacity = 0
+        
+        self.layer.borderColor = UIColor.white.withAlphaComponent(0.2).cgColor
     }
     
     public override func didMoveToWindow()
@@ -209,6 +230,26 @@ public extension GameView
         // Always use FilterChain since it has additional logic for chained filters.
         let filterChain = filters.isEmpty ? nil : FilterChain(filters: filters)
         self.filter = filterChain
+        
+        self.style = screen.style
+    }
+    
+    func updateStyle()
+    {
+        switch self.style
+        {
+        case .flat:
+            self.layer.shadowOpacity = 0
+            self.layer.cornerRadius = 0
+            self.glkView.layer.cornerRadius = 0
+            self.layer.borderWidth = 0
+            
+        case .floating:
+            self.layer.shadowOpacity = 0.5
+            self.layer.cornerRadius = 15
+            self.glkView.layer.cornerRadius = 15
+            self.layer.borderWidth = 1
+        }
     }
 }
 

@@ -55,7 +55,9 @@ extension ControllerSkin
         
         public var isTouchScreen: Bool = false
         
-        public init(id: String, inputFrame: CGRect? = nil, outputFrame: CGRect? = nil, filters: [CIFilter]? = nil, placement: Placement = .controller, isTouchScreen: Bool = false)
+        public var style: GameViewStyle = .flat
+        
+        public init(id: String, inputFrame: CGRect? = nil, outputFrame: CGRect? = nil, filters: [CIFilter]? = nil, placement: Placement = .controller, isTouchScreen: Bool = false, style: GameViewStyle = .floating)
         {
             self.id = id
             self.inputFrame = inputFrame
@@ -63,6 +65,7 @@ extension ControllerSkin
             self.filters = filters
             self.placement = placement
             self.isTouchScreen = isTouchScreen
+            self.style = style
         }
     }
 }
