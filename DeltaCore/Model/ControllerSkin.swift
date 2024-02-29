@@ -57,7 +57,7 @@ extension ControllerSkin
         
         public var style: GameViewStyle = .flat
         
-        public init(id: String, inputFrame: CGRect? = nil, outputFrame: CGRect? = nil, filters: [CIFilter]? = nil, placement: Placement = .controller, isTouchScreen: Bool = false, style: GameViewStyle = .floating)
+        public init(id: String, inputFrame: CGRect? = nil, outputFrame: CGRect? = nil, filters: [CIFilter]? = nil, placement: Placement = .controller, isTouchScreen: Bool = false, style: GameViewStyle = .flat)
         {
             self.id = id
             self.inputFrame = inputFrame

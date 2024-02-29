@@ -164,6 +164,7 @@ public class GameView: UIView
         self.layer.shadowOpacity = 0
         
         self.layer.borderColor = UIColor.white.withAlphaComponent(0.2).cgColor
+        self.layer.borderWidth = 0
     }
     
     public override func didMoveToWindow()
