@@ -117,42 +117,49 @@ public class ControllerView: UIView, GameController
     public var isButtonTouchOverlayEnabled = true {
         didSet {
             self.buttonsView.isTouchOverlayEnabled = self.isButtonTouchOverlayEnabled
+            self.controllerInputView?.controllerView.buttonsView.isTouchOverlayEnabled = self.isButtonTouchOverlayEnabled
         }
     }
     
     public var touchOverlayOpacity = 1.0 {
         didSet {
             self.buttonsView.touchOverlayOpacity = self.touchOverlayOpacity
+            self.controllerInputView?.controllerView.buttonsView.touchOverlayOpacity = self.touchOverlayOpacity
         }
     }
     
     public var touchOverlaySize = 1.0 {
         didSet {
             self.buttonsView.touchOverlaySize = self.touchOverlaySize
+            self.controllerInputView?.controllerView.buttonsView.touchOverlaySize = self.touchOverlaySize
         }
     }
     
     public var touchOverlayColor = UIColor.white {
         didSet {
             self.buttonsView.touchOverlayColor = self.touchOverlayColor
+            self.controllerInputView?.controllerView.buttonsView.touchOverlayColor = self.touchOverlayColor
         }
     }
     
     public var touchOverlayStyle = ButtonOverlayStyle.bubble {
         didSet {
             self.buttonsView.touchOverlayStyle = self.touchOverlayStyle
+            self.controllerInputView?.controllerView.buttonsView.touchOverlayStyle = self.touchOverlayStyle
         }
     }
     
     public var isAltRepresentationsEnabled = true {
         didSet {
             self._useAltRepresentations = self.isAltRepresentationsEnabled
+            self.controllerInputView?.controllerView.isAltRepresentationsEnabled = self.isAltRepresentationsEnabled
         }
     }
     
     public var isDebugModeEnabled = true {
         didSet {
             self._showDebugMode = self.isDebugModeEnabled
+            self.controllerInputView?.controllerView.isDebugModeEnabled = self.isDebugModeEnabled
         }
     }
     
@@ -735,6 +742,7 @@ public extension ControllerView
     func invalidateImageCache()
     {
         self.imageCache.removeAllObjects()
+        self.controllerInputView?.controllerView.imageCache.removeAllObjects()
     }
 }
 
