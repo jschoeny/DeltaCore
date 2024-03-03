@@ -97,6 +97,7 @@ extension TouchControllerSkin: ControllerSkinProtocol
             
             var screen = screen
             screen.placement = .app
+            screen.style = .flat
             
             switch self.screenLayoutAxis
             {
