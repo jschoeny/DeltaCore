@@ -524,6 +524,8 @@ extension GameViewController
             for gameView in self.gameViews
             {
                 gameView.filter = nil
+                gameView.style = .flat
+                gameView.isTouchScreen = false
             }
         }
         
