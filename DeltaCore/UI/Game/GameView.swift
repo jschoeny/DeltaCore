@@ -42,6 +42,7 @@ public enum GameViewStyle: String, CaseIterable
 public class GameView: UIView
 {
     public var isEnabled: Bool = true
+    public var isTouchScreen: Bool = false
     
     @NSCopying public var inputImage: CIImage? {
         didSet {
@@ -233,6 +234,7 @@ public extension GameView
         self.filter = filterChain
         
         self.style = screen.style
+        self.isTouchScreen = screen.isTouchScreen
     }
     
     func updateStyle()
