@@ -480,25 +480,33 @@ extension GameViewController
             return
         }
         
-        if let inputExtent = self.gameView.inputImage?.extent
-        {
-            self.screenSize = CGSize(width: inputExtent.width, height: inputExtent.height)
-        }
-        
-        var filters: [CIFilter] = []
-        
         if self.blurScreenKeepAspect
         {
+            var filters = [CIFilter]()
+            let scaleTransform = CGAffineTransform(scaleX: 1, y: 1)
+            let scaleFilter = CIFilter(name: "CIAffineTransform", parameters: ["inputTransform": NSValue(cgAffineTransform: scaleTransform)])!
+            
+            filters.append(scaleFilter)
+            
+            if let inputExtent = self.gameView.inputImage?.extent
+            {
+                self.screenSize = inputExtent.size
+            }
+            
             let availableGameSize = CGSize(width: self.availableGameFrame.width, height: self.availableGameFrame.height)
             let gameRect = CGRect(origin: .zero, size: self.screenSize)
             
-            let cropFrame = AVMakeRect(aspectRatio: availableGameSize, insideRect: gameRect)
+            let cropFrame = AVMakeRect(aspectRatio: availableGameSize, insideRect: gameRect).rounded()
             let cropFilter = CIFilter(name: "CICrop", parameters: ["inputRectangle": CIVector(cgRect: cropFrame)])!
             
             filters.append(cropFilter)
+            
+            self.blurScreen.filters = filters
         }
-        
-        self.blurScreen.filters = filters
+        else
+        {
+            self.blurScreen.filters = nil
+        }
         
         self.blurGameView.update(for: self.blurScreen)
     }
