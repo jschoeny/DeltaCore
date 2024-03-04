@@ -93,7 +93,20 @@ extension TouchControllerSkin: ControllerSkinProtocol
         let filteredScreens = screens.filter(self.screenPredicate ?? { _ in true })
 
         let updatedScreens = filteredScreens.enumerated().map { (index, screen) -> ControllerSkin.Screen in
-            let length = 1.0 / CGFloat(filteredScreens.count)
+            let unsafeArea: CGFloat
+            
+            if traits.orientation == .landscape,
+               filteredScreens.count > 1
+            {
+                unsafeArea = self.unsafeArea(for: traits, alt: alt) ?? 0
+            }
+            else
+            {
+                unsafeArea = 0
+            }
+            
+            let horizontalLength = (1 - (unsafeArea * 2)) / CGFloat(filteredScreens.count)
+            let verticalLength = 1 / CGFloat(filteredScreens.count)
             
             var screen = screen
             screen.placement = .app
@@ -101,8 +114,8 @@ extension TouchControllerSkin: ControllerSkinProtocol
             
             switch self.screenLayoutAxis
             {
-            case .horizontal: screen.outputFrame = CGRect(x: length * CGFloat(index), y: 0, width: length, height: 1.0)
-            case .vertical: screen.outputFrame = CGRect(x: 0, y: length * CGFloat(index), width: 1.0, height: length)
+            case .horizontal: screen.outputFrame = CGRect(x: (horizontalLength * CGFloat(index)) + unsafeArea, y: 0, width: horizontalLength, height: 1.0)
+            case .vertical: screen.outputFrame = CGRect(x: 0, y: verticalLength * CGFloat(index), width: 1.0, height: verticalLength)
             }
             
             return screen
@@ -120,7 +133,7 @@ extension TouchControllerSkin: ControllerSkinProtocol
     {
         guard let screens = self.screens(for: traits) else { return nil }
 
-        let compositeScreenSize = screens.reduce(into: CGSize.zero) { (size, screen) in
+        var compositeScreenSize = screens.reduce(into: CGSize.zero) { (size, screen) in
             guard let inputFrame = screen.inputFrame else { return }
 
             switch self.screenLayoutAxis
@@ -134,6 +147,13 @@ extension TouchControllerSkin: ControllerSkinProtocol
                 size.height += inputFrame.height
             }
         }
+        
+        guard traits.orientation == .landscape,
+              screens.count > 1 else { return compositeScreenSize }
+        
+        let unsafeArea = self.unsafeArea(for: traits, alt: alt) ?? 0
+            
+        compositeScreenSize.width *= (1 - unsafeArea)
 
         return compositeScreenSize
     }
@@ -144,5 +164,9 @@ extension TouchControllerSkin: ControllerSkinProtocol
     
     public func anyPreviewSize(for traits: ControllerSkin.Traits, alt: Bool = false) -> CGSize? {
         return self.controllerSkin.previewSize(for: traits, alt: alt)
+    }
+    
+    public func unsafeArea(for traits: ControllerSkin.Traits, alt: Bool) -> CGFloat? {
+        return (self.controllerSkin.unsafeArea(for: traits, alt: alt) ?? 0) / UIScreen.main.bounds.width
     }
 }

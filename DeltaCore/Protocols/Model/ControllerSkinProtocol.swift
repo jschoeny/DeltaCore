@@ -39,6 +39,8 @@ public protocol ControllerSkinProtocol
     func anyPreviewSize(for traits: ControllerSkin.Traits, alt: Bool) -> CGSize?
     
     func supportedTraits(for traits: ControllerSkin.Traits, alt: Bool) -> ControllerSkin.Traits?
+    
+    func unsafeArea(for traits: ControllerSkin.Traits, alt: Bool) -> CGFloat?
 }
 
 public extension ControllerSkinProtocol

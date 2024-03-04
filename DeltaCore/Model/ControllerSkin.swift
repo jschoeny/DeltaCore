@@ -502,6 +502,10 @@ public extension ControllerSkin
         
         return self.previewSize(for: tempTraits, alt: alt)
     }
+    
+    func unsafeArea(for traits: Traits, alt: Bool) -> CGFloat? {
+        return 0
+    }
 }
 
 private extension ControllerSkin
