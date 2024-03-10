@@ -551,8 +551,6 @@ public extension ControllerView
             isTranslucent = self.controllerSkin?.isTranslucent(for: traits, alt: self._useAltRepresentations) ?? false
             self._isCurrentSkinTranslucent = isTranslucent
             
-            self._useBackgroundBlur = self.controllerSkin?.backgroundBlur(for: traits, alt: self._useAltRepresentations)
-            
             var thumbstickViews = [ControllerSkin.Item.ID: ThumbstickInputView]()
             var previousThumbstickViews = self.thumbstickViews
             

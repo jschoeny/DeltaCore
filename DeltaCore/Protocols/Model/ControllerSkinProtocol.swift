@@ -26,8 +26,6 @@ public protocol ControllerSkinProtocol
     
     func isTranslucent(for traits: ControllerSkin.Traits, alt: Bool) -> Bool?
     
-    func backgroundBlur(for traits: ControllerSkin.Traits, alt: Bool) -> Bool?
-    
     func gameScreenFrame(for traits: ControllerSkin.Traits, alt: Bool) -> CGRect?
     func screens(for traits: ControllerSkin.Traits, alt: Bool) -> [ControllerSkin.Screen]?
     

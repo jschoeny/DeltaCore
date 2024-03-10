@@ -79,11 +79,6 @@ extension TouchControllerSkin: ControllerSkinProtocol
     {
         return false
     }
-    
-    public func backgroundBlur(for traits: ControllerSkin.Traits, alt: Bool = false) -> Bool?
-    {
-        return false
-    }
 
     public func screens(for traits: ControllerSkin.Traits, alt: Bool = false) -> [ControllerSkin.Screen]?
     {
