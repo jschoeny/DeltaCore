@@ -36,7 +36,9 @@ public enum SamplerMode
 public enum GameViewStyle: String, CaseIterable
 {
     case flat = "Flat"
+    case flatRounded = "Flat Rounded"
     case floating = "Floating"
+    case floatingRounded = "Floating Rounded"
 }
 
 public class GameView: UIView
@@ -247,7 +249,19 @@ public extension GameView
             self.glkView.layer.cornerRadius = 0
             self.layer.borderWidth = 0
             
+        case .flatRounded:
+            self.layer.shadowOpacity = 0
+            self.layer.cornerRadius = 15
+            self.glkView.layer.cornerRadius = 15
+            self.layer.borderWidth = 0
+            
         case .floating:
+            self.layer.shadowOpacity = 0.5
+            self.layer.cornerRadius = 0
+            self.glkView.layer.cornerRadius = 0
+            self.layer.borderWidth = 1
+            
+        case .floatingRounded:
             self.layer.shadowOpacity = 0.5
             self.layer.cornerRadius = 15
             self.glkView.layer.cornerRadius = 15
