@@ -23,6 +23,8 @@ public enum ButtonOverlayStyle: String, CaseIterable, CustomStringConvertible
 
 class ButtonsInputView: UIView
 {
+    var isDiagonalDpadInputsEnabled = true
+    
     var isHapticFeedbackEnabled = true
     var isClickyHapticEnabled = true
     var hapticFeedbackStrength = 1.0
@@ -162,38 +164,24 @@ extension ButtonsInputView
                 inputs.append(contentsOf: itemInputs)
             
             case let .directional(up, down, left, right):
-
-                let divisor: CGFloat
-                if case .thumbstick = item.kind
-                {
-                    divisor = 2.0
-                }
-                else
-                {
-                    divisor = 3.0
-                }
+                let dPad = self.getDpadRects(for: item, withDiagonals: self.isDiagonalDpadInputsEnabled)
                 
-                let topRect = CGRect(x: item.extendedFrame.minX, y: item.extendedFrame.minY, width: item.extendedFrame.width, height: (item.frame.height / divisor) + (item.frame.minY - item.extendedFrame.minY))
-                let bottomRect = CGRect(x: item.extendedFrame.minX, y: item.frame.maxY - item.frame.height / divisor, width: item.extendedFrame.width, height: (item.frame.height / divisor) + (item.extendedFrame.maxY - item.frame.maxY))
-                let leftRect = CGRect(x: item.extendedFrame.minX, y: item.extendedFrame.minY, width: (item.frame.width / divisor) + (item.frame.minX - item.extendedFrame.minX), height: item.extendedFrame.height)
-                let rightRect = CGRect(x: item.frame.maxX - item.frame.width / divisor, y: item.extendedFrame.minY, width: (item.frame.width / divisor) + (item.extendedFrame.maxX - item.frame.maxX), height: item.extendedFrame.height)
-                
-                if topRect.contains(point)
+                if dPad.top.contains(point)
                 {
                     inputs.append(up)
                 }
                 
-                if bottomRect.contains(point)
+                if dPad.bottom.contains(point)
                 {
                     inputs.append(down)
                 }
                 
-                if leftRect.contains(point)
+                if dPad.left.contains(point)
                 {
                     inputs.append(left)
                 }
                 
-                if rightRect.contains(point)
+                if dPad.right.contains(point)
                 {
                     inputs.append(right)
                 }
@@ -298,6 +286,7 @@ private extension ButtonsInputView
                     guard frame.contains(scaledTouch) else { continue }
                     
                     var inputCenter = CGPoint()
+                    var skipDrawing = false
                     
                     switch item.inputs
                     {
@@ -312,27 +301,23 @@ private extension ButtonsInputView
                         inputCenter = self.centerPoint(rect: item.frame)
                         
                     case .directional:
-                        // calculate input rectangles for up down left right to test if touch lies within them
-                        let topRect = CGRect(x: item.extendedFrame.minX, y: item.extendedFrame.minY, width: item.extendedFrame.width, height: (item.frame.height / 3) + (item.frame.minY - item.extendedFrame.minY))
-                        let bottomRect = CGRect(x: item.extendedFrame.minX, y: item.frame.maxY - item.frame.height / 3, width: item.extendedFrame.width, height: (item.frame.height / 3) + (item.extendedFrame.maxY - item.frame.maxY))
-                        let leftRect = CGRect(x: item.extendedFrame.minX, y: item.extendedFrame.minY, width: (item.frame.width / 3) + (item.frame.minX - item.extendedFrame.minX), height: item.extendedFrame.height)
-                        let rightRect = CGRect(x: item.frame.maxX - item.frame.width / 3, y: item.extendedFrame.minY, width: (item.frame.width / 3) + (item.extendedFrame.maxX - item.frame.maxX), height: item.extendedFrame.height)
+                        let dPad = self.getDpadRects(for: item, withDiagonals: self.isDiagonalDpadInputsEnabled)
                         
                         // offset to move the corner inputs in by so they're not sticking so far out
                         let offsetX = item.frame.width * 0.1; let offsetY = item.frame.height * 0.1
                         
                         // determine which section of the dpad touch is in, set inputCenter to that location
-                        if topRect.contains(scaledTouch)
+                        if dPad.top.contains(scaledTouch)
                         {
-                            inputCenter.y = self.centerPoint(rect: topRect).y
-                            if leftRect.contains(scaledTouch)
+                            inputCenter.y = self.centerPoint(rect: dPad.top).y
+                            if dPad.left.contains(scaledTouch)
                             {
-                                inputCenter.x = self.centerPoint(rect: leftRect).x + offsetX
+                                inputCenter.x = self.centerPoint(rect: dPad.left).x + offsetX
                                 inputCenter.y += offsetY
                             }
-                            else if rightRect.contains(scaledTouch)
+                            else if dPad.right.contains(scaledTouch)
                             {
-                                inputCenter.x = self.centerPoint(rect: rightRect).x - offsetX
+                                inputCenter.x = self.centerPoint(rect: dPad.right).x - offsetX
                                 inputCenter.y += offsetY
                             }
                             else
@@ -340,17 +325,17 @@ private extension ButtonsInputView
                                 inputCenter.x = self.centerPoint(rect: item.frame).x
                             }
                         }
-                        else if bottomRect.contains(scaledTouch)
+                        else if dPad.bottom.contains(scaledTouch)
                         {
-                            inputCenter.y = self.centerPoint(rect: bottomRect).y
-                            if leftRect.contains(scaledTouch)
+                            inputCenter.y = self.centerPoint(rect: dPad.bottom).y
+                            if dPad.left.contains(scaledTouch)
                             {
-                                inputCenter.x = self.centerPoint(rect: leftRect).x + offsetX
+                                inputCenter.x = self.centerPoint(rect: dPad.left).x + offsetX
                                 inputCenter.y -= offsetY
                             }
-                            else if rightRect.contains(scaledTouch)
+                            else if dPad.right.contains(scaledTouch)
                             {
-                                inputCenter.x = self.centerPoint(rect: rightRect).x - offsetX
+                                inputCenter.x = self.centerPoint(rect: dPad.right).x - offsetX
                                 inputCenter.y -= offsetY
                             }
                             else
@@ -358,33 +343,37 @@ private extension ButtonsInputView
                                 inputCenter.x = self.centerPoint(rect: item.frame).x
                             }
                         }
-                        else if leftRect.contains(scaledTouch)
+                        else if dPad.left.contains(scaledTouch)
                         {
-                            inputCenter = self.centerPoint(rect: leftRect)
+                            inputCenter = self.centerPoint(rect: dPad.left)
                         }
-                        else if rightRect.contains(scaledTouch)
+                        else if dPad.right.contains(scaledTouch)
                         {
-                            inputCenter = self.centerPoint(rect: rightRect)
+                            inputCenter = self.centerPoint(rect: dPad.right)
                         }
                         else
                         {
-                            inputCenter = self.centerPoint(rect: item.frame)
+                            skipDrawing = true
                         }
                     }
                     
-                    inputCenter.x *= self.bounds.width; inputCenter.y *= self.bounds.height
+                    inputCenter.x *= self.bounds.width
+                    inputCenter.y *= self.bounds.height
                     
-                    switch self.touchOverlayStyle
+                    if !skipDrawing
                     {
-                    case .bubble:
-                        cgContext.drawRadialGradient(overlayBubbleGradient, startCenter: inputCenter, startRadius: 0, endCenter: inputCenter, endRadius: overlaySize - (overlayLineWidth / 2), options: [])
-                        cgContext.addEllipse(in: CGRectMake(inputCenter.x - overlaySize, inputCenter.y - overlaySize, overlaySize * 2, overlaySize * 2))
-                        cgContext.drawPath(using: .stroke)
-                    case .glow:
-                        cgContext.drawRadialGradient(overlayGlowGradient, startCenter: inputCenter, startRadius: 0, endCenter: inputCenter, endRadius: overlaySize, options: [])
-                    case .ring:
-                        cgContext.addEllipse(in: CGRectMake(inputCenter.x - overlaySize, inputCenter.y - overlaySize, overlaySize * 2, overlaySize * 2))
-                        cgContext.drawPath(using: .stroke)
+                        switch self.touchOverlayStyle
+                        {
+                        case .bubble:
+                            cgContext.drawRadialGradient(overlayBubbleGradient, startCenter: inputCenter, startRadius: 0, endCenter: inputCenter, endRadius: overlaySize - (overlayLineWidth / 2), options: [])
+                            cgContext.addEllipse(in: CGRectMake(inputCenter.x - overlaySize, inputCenter.y - overlaySize, overlaySize * 2, overlaySize * 2))
+                            cgContext.drawPath(using: .stroke)
+                        case .glow:
+                            cgContext.drawRadialGradient(overlayGlowGradient, startCenter: inputCenter, startRadius: 0, endCenter: inputCenter, endRadius: overlaySize, options: [])
+                        case .ring:
+                            cgContext.addEllipse(in: CGRectMake(inputCenter.x - overlaySize, inputCenter.y - overlaySize, overlaySize * 2, overlaySize * 2))
+                            cgContext.drawPath(using: .stroke)
+                        }
                     }
                 }
             }
@@ -396,5 +385,60 @@ private extension ButtonsInputView
     func centerPoint(rect: CGRect) -> CGPoint
     {
         return CGPoint(x: rect.midX, y: rect.midY)
+    }
+    
+    func getDpadRects(for item: ControllerSkin.Item, withDiagonals: Bool) -> (top: CGRect, bottom: CGRect, left: CGRect, right: CGRect)
+    {
+        let topRect: CGRect
+        let bottomRect: CGRect
+        let leftRect: CGRect
+        let rightRect: CGRect
+        
+        if withDiagonals
+        {
+            topRect = CGRect(x: item.extendedFrame.minX,
+                             y: item.extendedFrame.minY,
+                             width: item.extendedFrame.width,
+                             height: (item.frame.height / 3) + (item.frame.minY - item.extendedFrame.minY))
+            
+            bottomRect = CGRect(x: item.extendedFrame.minX,
+                                y: item.frame.maxY - (item.frame.height / 3),
+                                width: item.extendedFrame.width,
+                                height: (item.frame.height / 3) + (item.extendedFrame.maxY - item.frame.maxY))
+            
+            leftRect = CGRect(x: item.extendedFrame.minX,
+                              y: item.extendedFrame.minY,
+                              width: (item.frame.width / 3) + (item.frame.minX - item.extendedFrame.minX),
+                              height: item.extendedFrame.height)
+            
+            rightRect = CGRect(x: item.frame.maxX - (item.frame.width / 3),
+                               y: item.extendedFrame.minY,
+                               width: (item.frame.width / 3) + (item.extendedFrame.maxX - item.frame.maxX),
+                               height: item.extendedFrame.height)
+        }
+        else
+        {
+            topRect = CGRect(x: item.frame.minX + (item.frame.width / 3),
+                             y: item.extendedFrame.minY,
+                             width: item.frame.width / 3,
+                             height: (item.frame.height / 3) + (item.frame.minY - item.extendedFrame.minY))
+            
+            bottomRect = CGRect(x: item.frame.minX + (item.frame.width / 3),
+                                y: item.frame.maxY - (item.frame.height / 3),
+                                width: item.frame.width / 3,
+                                height: (item.frame.height / 3) + (item.extendedFrame.maxY - item.frame.maxY))
+            
+            leftRect = CGRect(x: item.extendedFrame.minX,
+                              y: item.frame.minY + (item.frame.height / 3),
+                              width: (item.frame.width / 3) + (item.frame.minX - item.extendedFrame.minX),
+                              height: item.frame.height / 3)
+            
+            rightRect = CGRect(x: item.frame.maxX - (item.frame.width / 3),
+                               y: item.frame.minY + (item.frame.height / 3),
+                               width: (item.frame.width / 3) + (item.extendedFrame.maxX - item.frame.maxX),
+                               height: item.frame.height / 3)
+        }
+        
+        return (topRect, bottomRect, leftRect, rightRect)
     }
 }
