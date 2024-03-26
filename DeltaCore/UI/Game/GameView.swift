@@ -216,11 +216,12 @@ public extension GameView
         return snapshot
     }
     
-    func update(for screen: ControllerSkin.Screen)
+    func update(for screen: ControllerSkin.Screen, ignoringInputFrame: Bool = false)
     {
         var filters = [CIFilter]()
         
-        if let inputFrame = screen.inputFrame
+        if let inputFrame = screen.inputFrame,
+           !ignoringInputFrame
         {
             let cropFilter = CIFilter(name: "CICrop", parameters: ["inputRectangle": CIVector(cgRect: inputFrame)])!
             filters.append(cropFilter)

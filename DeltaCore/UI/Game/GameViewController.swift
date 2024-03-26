@@ -115,6 +115,12 @@ open class GameViewController: UIViewController, GameControllerReceiver
         }
     }
     
+    public var ignoreInputFrames: Bool = false {
+        didSet {
+            self.updateGameViews()
+        }
+    }
+    
     private var screenSize: CGSize = CGSize()
     private var availableGameFrame: CGRect = CGRect()
         
@@ -523,7 +529,7 @@ extension GameViewController
             for screen in screens
             {
                 let gameView = previousGameViews.popLast() ?? GameView(frame: .zero)
-                gameView.update(for: screen)
+                gameView.update(for: screen, ignoringInputFrame: self.ignoreInputFrames)
                 gameViews.append(gameView)
             }
         }
