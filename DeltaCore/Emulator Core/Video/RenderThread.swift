@@ -22,7 +22,7 @@ class RenderThread: Thread
         
         super.init()
         
-        self.name = "Delta - Rendering"
+        self.name = "Ignited - Rendering"
         self.qualityOfService = .userInitiated
     }
     
