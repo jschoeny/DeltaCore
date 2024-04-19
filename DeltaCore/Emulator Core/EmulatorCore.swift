@@ -10,9 +10,9 @@ import AVFoundation
 
 extension EmulatorCore
 {
-    @objc public static let emulationDidQuitNotification = Notification.Name("com.rileytestut.DeltaCore.emulationDidQuit")
+    @objc public static let emulationDidQuitNotification = Notification.Name("com.litritt.DeltaCore.emulationDidQuit")
     
-    private static let didUpdateFrameNotification = Notification.Name("com.rileytestut.DeltaCore.didUpdateFrame")
+    private static let didUpdateFrameNotification = Notification.Name("com.litritt.DeltaCore.didUpdateFrame")
 }
 
 public extension EmulatorCore
@@ -80,7 +80,7 @@ public final class EmulatorCore: NSObject
     private var previousFrameDuration: TimeInterval? = nil
     
     private var reactivateInputsDispatchGroup: DispatchGroup?
-    private let reactivateInputsQueue = DispatchQueue(label: "com.rileytestut.DeltaCore.EmulatorCore.reactivateInputsQueue", attributes: [.concurrent])
+    private let reactivateInputsQueue = DispatchQueue(label: "com.litritt.DeltaCore.EmulatorCore.reactivateInputsQueue", attributes: [.concurrent])
     
     private let emulationLock = NSLock()
     
@@ -439,7 +439,7 @@ private extension EmulatorCore
 {
     func runGameLoop()
     {
-        let emulationQueue = DispatchQueue(label: "com.rileytestut.DeltaCore.emulationQueue", qos: .userInitiated)
+        let emulationQueue = DispatchQueue(label: "com.litritt.DeltaCore.emulationQueue", qos: .userInitiated)
         emulationQueue.async {
             
             let screenRefreshRate = 1.0 / 60.0

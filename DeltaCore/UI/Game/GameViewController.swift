@@ -127,7 +127,7 @@ open class GameViewController: UIViewController, GameControllerReceiver
     open private(set) var controllerView: ControllerView!
     private var splitViewInputViewHeight: CGFloat = 0
     
-    private let emulatorCoreQueue = DispatchQueue(label: "com.rileytestut.DeltaCore.GameViewController.emulatorCoreQueue", qos: .userInitiated)
+    private let emulatorCoreQueue = DispatchQueue(label: "com.litritt.DeltaCore.GameViewController.emulatorCoreQueue", qos: .userInitiated)
     
     private var _previousControllerSkin: ControllerSkinProtocol?
     private var _previousControllerSkinTraits: ControllerSkin.Traits?

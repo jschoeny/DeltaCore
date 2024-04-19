@@ -164,7 +164,7 @@ public class AudioManager: NSObject, AudioRendering
     private let audioBufferCount = 3
     
     // Used to synchronize access to self.audioPlayerNode without causing deadlocks.
-    private let renderingQueue = DispatchQueue(label: "com.rileytestut.Delta.AudioManager.renderingQueue")
+    private let renderingQueue = DispatchQueue(label: "com.litritt.Delta.AudioManager.renderingQueue")
     
     private var isMuted: Bool = false {
         didSet {
