@@ -21,7 +21,7 @@ extension TouchControllerSkin
 public struct TouchControllerSkin
 {
     public var name: String { "TouchControllerSkin" }
-    public var identifier: String { "com.delta.TouchControllerSkin" }
+    public var identifier: String { "com.ignited.TouchControllerSkin" }
     public var gameType: GameType { self.controllerSkin.gameType }
     public var isDebugModeEnabled: Bool { false }
     public var hasAltRepresentations: Bool { false }

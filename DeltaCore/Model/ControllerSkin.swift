@@ -12,7 +12,7 @@ import UIKit
 import ZIPFoundation
 #endif
 
-public let kUTTypeDeltaControllerSkin: CFString = "com.rileytestut.delta.skin" as CFString
+public let kUTTypeDeltaControllerSkin: CFString = "com.litritt.ignited.skin" as CFString
 
 private typealias RepresentationDictionary = [String: [String: AnyObject]]
 
