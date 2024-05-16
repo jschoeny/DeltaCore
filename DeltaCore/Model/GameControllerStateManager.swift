@@ -28,7 +28,7 @@ internal class GameControllerStateManager
     private let _receivers = NSMapTable<AnyObject, AnyObject>.weakToStrongObjects()
     
     // Used to synchronize access to _receivers to prevent race conditions (yay ObjC)
-    private let dispatchQueue = DispatchQueue(label: "com.litritt.Delta.GameControllerStateManager.dispatchQueue")
+    private let dispatchQueue = DispatchQueue(label: "com.litritt.Ignited.GameControllerStateManager.dispatchQueue")
     
     
     init(gameController: GameController)
