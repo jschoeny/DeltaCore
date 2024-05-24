@@ -31,6 +31,9 @@ public protocol DeltaCoreProtocol: CustomStringConvertible
     var emulatorBridge: EmulatorBridging { get }
     
     var resourceBundle: Bundle { get }
+
+    /* LiveSkins */
+    var isLiveSkinSupported: Bool { get }
 }
 
 public extension DeltaCoreProtocol
@@ -69,6 +72,13 @@ public extension DeltaCoreProtocol
     var description: String {
         let description = "\(self.name) (\(self.identifier))"
         return description
+    }
+}
+
+public extension DeltaCoreProtocol
+{
+    var isLiveSkinSupported: Bool {
+        return false
     }
 }
 

@@ -53,4 +53,10 @@ public protocol EmulatorBridging: NSObjectProtocol
     @discardableResult func addCheatCode(_ cheatCode: String, type: String) -> Bool
     func resetCheats()
     func updateCheats()
+
+    /// LiveSkins
+    @objc optional func setLiveSkinAddress(_ key: String, address: Int, bitWidth: Int, bitOffset: Int)
+    @objc optional func setLiveSkinPointer(_ key: String, pointer: Int, valueOffset: Int, bitWidth: Int, bitOffset: Int)
+    @objc optional func getLiveSkinValue(_ key: String) -> Int
+    @objc optional func resetLiveSkin()
 }
