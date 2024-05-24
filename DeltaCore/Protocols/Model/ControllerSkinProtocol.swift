@@ -24,6 +24,9 @@ public protocol ControllerSkinProtocol
     
     func items(for traits: ControllerSkin.Traits, alt: Bool) -> [ControllerSkin.Item]?
     
+    func liveSkinItems(for traits: ControllerSkin.Traits, alt: Bool) -> [ControllerSkin.LiveSkinItem]?
+    func liveSkinImage(for item: ControllerSkin.LiveSkinItem, traits: ControllerSkin.Traits, preferredSize: ControllerSkin.Size, alt: Bool) -> UIImage?
+    
     func isTranslucent(for traits: ControllerSkin.Traits, alt: Bool) -> Bool?
     
     func gameScreenFrame(for traits: ControllerSkin.Traits, alt: Bool) -> CGRect?

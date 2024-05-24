@@ -74,6 +74,16 @@ extension TouchControllerSkin: ControllerSkinProtocol
         touchScreenItem.extendedFrame = outputFrame
         return [touchScreenItem]
     }
+
+    public func liveSkinItems(for traits: ControllerSkin.Traits, alt: Bool = false) -> [ControllerSkin.LiveSkinItem]?
+    {
+        return nil
+    }
+
+    public func liveSkinImage(for item: ControllerSkin.LiveSkinItem, traits: ControllerSkin.Traits, preferredSize: ControllerSkin.Size, alt: Bool = false) -> UIImage?
+    {
+        return nil
+    }
     
     public func isTranslucent(for traits: ControllerSkin.Traits, alt: Bool = false) -> Bool?
     {

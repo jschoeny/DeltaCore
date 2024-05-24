@@ -170,6 +170,20 @@ public class ControllerView: UIView, GameController
     }
     
     public var buttonPressedHandler: (() -> Void)?
+
+    public var emulatorCore: EmulatorCore? {
+        get {
+            return self._emulatorCore
+        }
+        set {
+            self._emulatorCore = newValue
+        }
+    }
+    
+    private var liveSkinImages: [String: UIImage] = [:]
+    private var liveSkinImageSizes: [String: CGSize] = [:]
+    private var liveSkinImageTiles: NSCache<NSString, NSCache<NSString, UIImage>> = NSCache()
+    private var liveSkinItems: [String: [ControllerSkin.LiveSkinItem]] = [:]
     
     //MARK: - <GameControllerType>
     /// <GameControllerType>
@@ -222,6 +236,7 @@ public class ControllerView: UIView, GameController
     private var thumbstickViews = [ControllerSkin.Item.ID: ThumbstickInputView]()
     private var touchViews = [ControllerSkin.Item.ID: TouchInputView]()
     
+    private var _emulatorCore: EmulatorCore? = nil
     private var _performedInitialLayout = false
     private var _delayedUpdatingControllerSkin = false
     private var _useAltRepresentations = false
@@ -620,6 +635,8 @@ public extension ControllerView
             
             previousTouchViews.values.forEach { $0.removeFromSuperview() }
             self.touchViews = touchViews
+            
+            self.initializeLiveSkin()
         }
         else
         {
@@ -909,5 +926,433 @@ extension ControllerView: UIKeyInput
     
     public func deleteBackward()
     {
+    }
+}
+
+//MARK: - Live Skin Items -
+/// Live Skin Items
+extension UIImage
+{
+    func extractTiles(with tileSize: CGSize) -> [UIImage]?
+    {
+        let verticalCount = max(1, Int(size.height / tileSize.height))
+        let horizontalCount = max(1, Int(size.width / tileSize.width))
+        let tileWidth = min(tileSize.width, size.width)
+        let tileHeight = min(tileSize.height, size.height)
+        let tileSizeNormalized = CGSize(width: tileWidth, height: tileHeight)
+
+        var tiles = [UIImage]()
+
+        for verticalIndex in 0...verticalCount - 1
+        {
+            for horizontalIndex in 0...horizontalCount - 1
+            {
+                let imagePoint = CGPoint(x: CGFloat(horizontalIndex) * tileWidth * -1,
+                                         y: CGFloat(verticalIndex) * tileHeight * -1)
+                UIGraphicsBeginImageContextWithOptions(tileSizeNormalized, false, 0.0)
+                draw(at: imagePoint)
+                if let newImage = UIGraphicsGetImageFromCurrentImageContext()
+                {
+                    tiles.append(newImage)
+                }
+                UIGraphicsEndImageContext()
+            }
+        }
+
+        return tiles
+    }
+
+    func extractTile(at index: Int, with tileSize: CGSize) -> UIImage?
+    {
+        let verticalCount = max(1, Int(size.height / tileSize.height))
+        let horizontalCount = max(1, Int(size.width / tileSize.width))
+        let tileWidth = min(tileSize.width, size.width)
+        let tileHeight = min(tileSize.height, size.height)
+        let tileSizeNormalized = CGSize(width: tileWidth, height: tileHeight)
+
+        let verticalIndex = index / horizontalCount
+        let horizontalIndex = index % horizontalCount
+
+        // Return nil if the index is out of bounds
+        if verticalIndex >= verticalCount || horizontalIndex >= horizontalCount
+        {
+            return nil
+        }
+
+        let imagePoint = CGPoint(x: CGFloat(horizontalIndex) * tileWidth * -1,
+                                 y: CGFloat(verticalIndex) * tileHeight * -1)
+        UIGraphicsBeginImageContextWithOptions(tileSizeNormalized, false, 0.0)
+        draw(at: imagePoint)
+        let newImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+
+        return newImage
+    }
+}
+
+extension ControllerView
+{
+    public func initializeLiveSkin()
+    {
+        guard let controllerSkin = self.controllerSkin, let traits = self.controllerSkinTraits else { return }
+        
+        self.resetLiveSkinOverlay()
+
+        if let items = controllerSkin.liveSkinItems(for: traits, alt: self._useAltRepresentations)
+        {
+            let cacheKey = String(describing: traits) + "-" + String(describing: self.controllerSkinSize) + "-" + String(describing: self._useAltRepresentations)
+            
+            for item in items
+            {
+                switch item.decryptionMethod
+                {
+                case .none: break
+                case .xor(let keyAddress, let keyBitInfo):
+                    setLiveSkinAddress(keyAddress, with: keyBitInfo)
+                case .gbaPokemonParty(_, let personalityAddress, let otIdAddress):
+                    let bitInfo = ControllerSkin.LiveSkinItem.BitInfo(width: 32, offset: 0)
+                    setLiveSkinAddress(personalityAddress, with: bitInfo)
+                    setLiveSkinAddress(otIdAddress, with: bitInfo)
+                }
+
+                switch item.data
+                {
+                    case .image(let address, let bitInfo, let filename, let size):
+                        if let image = controllerSkin.liveSkinImage(for: item, traits: traits, preferredSize: self.controllerSkinSize, alt: self._useAltRepresentations)
+                        {
+                            self.tryAddLiveSkinImage(image: image, for: filename, with: size)
+                            setLiveSkinAddress(address, with: bitInfo)
+                        }
+                    case .circularHP(let hpAddress, let hpMaxAddress, let hpBitInfo, let hpMaxBitInfo, _):
+                        setLiveSkinAddress(hpAddress, with: hpBitInfo)
+                        setLiveSkinAddress(hpMaxAddress, with: hpMaxBitInfo)
+                    case .rectangularHP(let hpAddress, let hpMaxAddress, let hpBitInfo, let hpMaxBitInfo, _):
+                        setLiveSkinAddress(hpAddress,  with: hpBitInfo)
+                        setLiveSkinAddress(hpMaxAddress, with: hpMaxBitInfo)
+                    case .number(let address, let bitInfo, _, _):
+                        setLiveSkinAddress(address, with: bitInfo)
+                    case .indexedText(let address, let bitInfo, _, _, _):
+                        setLiveSkinAddress(address, with: bitInfo)
+                }
+            }
+            self.liveSkinItems[cacheKey] = items
+        }
+    }
+
+    private func addressToKey(_ address: ControllerSkin.LiveSkinItem.Address, bitWidth: Int, bitOffset: Int = 0) -> String
+    {
+        switch address
+        {
+            case .address(let value):
+                return String(value) + ":" + String(bitWidth) + ">>" + String(bitOffset)
+            case .pointer(let value, let offset):
+                return String(value) + "+" + String(offset) + ":" + String(bitWidth) + ">>" + String(bitOffset)
+        }
+    }
+
+    private func setLiveSkinAddress(_ address: ControllerSkin.LiveSkinItem.Address, with bitInfo: ControllerSkin.LiveSkinItem.BitInfo) -> String?
+    {
+        guard let emulatorBridge = self._emulatorCore?.deltaCore.emulatorBridge else { return nil }
+        guard let setAddress = emulatorBridge.setLiveSkinAddress else { return nil }
+        guard let setPointer = emulatorBridge.setLiveSkinPointer else { return nil }
+        let key = addressToKey(address, bitWidth: bitInfo.width, bitOffset: bitInfo.offset)
+
+        switch address
+        {
+            case .address(let value):
+                setAddress(key, value, bitInfo.width, bitInfo.offset)
+            case .pointer(let value, let offset):
+                setPointer(key, value, offset, bitInfo.width, bitInfo.offset)
+        }
+        return key
+    }
+
+    private func setLiveSkinAddress(_ address: ControllerSkin.LiveSkinItem.Address, with bitInfo: ControllerSkin.LiveSkinItem.BitInfo, decryptionMethod: ControllerSkin.LiveSkinItem.DecryptionMethod) -> String?
+    {
+        guard let emulatorBridge = self._emulatorCore?.deltaCore.emulatorBridge else { return nil }
+        guard let setAddress = emulatorBridge.setLiveSkinAddress else { return nil }
+        guard let setPointer = emulatorBridge.setLiveSkinPointer else { return nil }
+        guard let getValue = emulatorBridge.getLiveSkinValue else { return nil }
+
+        switch decryptionMethod
+        {
+            case .gbaPokemonParty(let monAddress, let personalityAddress, let otIdAddress):
+                let personalityKey = addressToKey(personalityAddress, bitWidth: 32)
+                let personality = getValue(personalityKey)
+                let substructSelector: [[Int]] = [
+                    [0, 1, 2, 3], // 0
+                    [0, 1, 3, 2], // 1
+                    [0, 2, 1, 3], // 2
+                    [0, 3, 1, 2], // 3
+                    [0, 2, 3, 1], // 4
+                    [0, 3, 2, 1], // 5
+                    [1, 0, 2, 3], // 6
+                    [1, 0, 3, 2], // 7
+                    [2, 0, 1, 3], // 8
+                    [3, 0, 1, 2], // 9
+                    [2, 0, 3, 1], // 10
+                    [3, 0, 2, 1], // 11
+                    [1, 2, 0, 3], // 12
+                    [1, 3, 0, 2], // 13
+                    [2, 1, 0, 3], // 14
+                    [3, 1, 0, 2], // 15
+                    [2, 3, 0, 1], // 16
+                    [3, 2, 0, 1], // 17
+                    [1, 2, 3, 0], // 18
+                    [1, 3, 2, 0], // 19
+                    [2, 1, 3, 0], // 20
+                    [3, 1, 2, 0], // 21
+                    [2, 3, 1, 0], // 22
+                    [3, 2, 1, 0]  // 23
+                ]
+                let pSelect = substructSelector[personality % 24]
+                var baseAddress: Int
+                switch monAddress
+                {
+                    case .address(let value):
+                        baseAddress = value
+                    case .pointer: return nil
+                }
+                switch address
+                {
+                    case .address(let value):
+                        // Value should be the offset from monAddress
+                        // We need to translate that offset according to the mon's encryption algorithm
+                        // First, we need to find which substruct the value belongs to
+                        // Each substruct is 12 bytes long
+                        // The first substruct starts at monAddress + 32
+                        let originalSubstruct = (value - 32) / 12
+                        let localOffset = (value - 32) % 12
+                        let newSubstruct = pSelect[originalSubstruct]
+                        let newValue = baseAddress + 32 + (newSubstruct * 12) + localOffset
+                        let key = String(newValue) + ":" + String(bitInfo.width) + ">>" + String(bitInfo.offset)
+                        setAddress(key, newValue, bitInfo.width, bitInfo.offset)
+                        return key
+                    case .pointer(_, _):
+                        break
+                }
+            default:
+                break
+        }
+        return nil
+    }
+
+    func tryAddLiveSkinImage(image: UIImage, for key: String, with size: CGSize)
+    {
+        // Check if the image has already been added
+        if self.liveSkinImages[key] != nil && self.liveSkinImageSizes[key] != nil { return }
+        
+        // Add the image to liveSkinImages
+        self.liveSkinImages[key] = image
+        self.liveSkinImageSizes[key] = size
+    }
+
+    func getLiveSkinImage(for key: String, with index: Int) -> UIImage?
+    {
+        guard let image = self.liveSkinImages[key] else { return nil }
+        guard let size = self.liveSkinImageSizes[key] else { return nil }
+        
+        guard let cache = self.liveSkinImageTiles.object(forKey: key as NSString) else {
+            // Create a new cache and extract the image
+            let newCache = NSCache<NSString, UIImage>()
+            guard let extractedImage = image.extractTile(at: index, with: size) else { return nil }
+            newCache.setObject(extractedImage, forKey: String(index) as NSString)
+            self.liveSkinImageTiles.setObject(newCache, forKey: key as NSString)
+            return extractedImage
+        }
+
+        guard let extractedImage = cache.object(forKey: String(index) as NSString) else {
+            // Extract the image
+            guard let extractedImage = image.extractTile(at: index, with: size) else { return nil }
+            cache.setObject(extractedImage, forKey: String(index) as NSString)
+            return extractedImage
+        }
+
+        return extractedImage
+    }
+
+    private func tryDecryptValue(item: ControllerSkin.LiveSkinItem, address: ControllerSkin.LiveSkinItem.Address, bitInfo: ControllerSkin.LiveSkinItem.BitInfo) -> Int
+    {
+        guard let getValue = self._emulatorCore?.deltaCore.emulatorBridge.getLiveSkinValue else { return 0 }
+        let method = item.decryptionMethod
+        switch method
+        {
+            case .none:
+                let valueID = addressToKey(address, bitWidth: bitInfo.width, bitOffset: bitInfo.offset)
+                let value = getValue(valueID)
+                return value
+            case .xor(let keyAddress, _):
+                let keyKey = addressToKey(keyAddress, bitWidth: 32)
+                let key = getValue(keyKey)
+                let valueID = addressToKey(address, bitWidth: bitInfo.width, bitOffset: bitInfo.offset)
+                let value = getValue(valueID)
+                return value ^ key
+            case .gbaPokemonParty(_, let personalityAddress, let otIdAddress):
+                let personalityKey = addressToKey(personalityAddress, bitWidth: 32)
+                let personality = getValue(personalityKey)
+                let otIdKey = addressToKey(otIdAddress, bitWidth: 32)
+                let otId = getValue(otIdKey)
+                var addressOffset = 0
+                switch address
+                {
+                    case .address(let baseValue):
+                        addressOffset = baseValue
+                    case .pointer: return 0
+                }
+                // Line up the key properly
+                let mask = (1 << bitInfo.width) - 1
+                let key = ((otId ^ personality) >> (((addressOffset % 4) * 8) + bitInfo.offset)) & mask
+                // Update the live skin address for whenever personality or otId changes
+                if let valueID = setLiveSkinAddress(address, with: bitInfo, decryptionMethod: method) {
+                    let value = getValue(valueID)
+                    let retValue = value ^ key
+                    return retValue
+                }
+                return 0
+        }
+    }
+
+    public func updateLiveSkinOverlay() {
+        guard let traits = self.controllerSkinTraits else { return }
+        guard self._emulatorCore?.deltaCore.emulatorBridge.getLiveSkinValue != nil else { return }
+
+        let cacheKey = String(describing: traits) + "-" + String(describing: self.controllerSkinSize) + "-" + String(describing: self._useAltRepresentations)
+        guard let items = self.liveSkinItems[cacheKey] else {
+            self.buttonsView.updateLiveSkinOverlayView(overlayImage: nil)
+            return
+        }
+
+        let overlayLineWidth = 4.0
+        let renderer = UIGraphicsImageRenderer(bounds: self.bounds)
+
+        let overlayImage: UIImage = renderer.image { (context) in
+            let cgContext = context.cgContext
+            
+            var containingFrame = self.bounds
+            
+            for item in items
+            {
+                if let layoutGuide = self.appPlacementLayoutGuide, item.placement == .app
+                {
+                    containingFrame = layoutGuide.layoutFrame
+                }
+                let frame = item.frame.scaled(to: containingFrame)
+                switch item.data
+                {
+                    case .image(let address, let bitInfo, let imageName, _):
+                        let value = tryDecryptValue(item: item, address: address, bitInfo: bitInfo)
+                        if value < 0 { continue }
+
+                        if let image = self.getLiveSkinImage(for: imageName, with: Int(value))
+                        {
+                            image.draw(in: frame)
+                        }
+
+                    case .circularHP(let hpAddress, let hpMaxAddress, let hpBitInfo, let hpMaxBitInfo, let colors):
+                        let hp = tryDecryptValue(item: item, address: hpAddress, bitInfo: hpBitInfo)
+                        let hpMax = tryDecryptValue(item: item, address: hpMaxAddress, bitInfo: hpMaxBitInfo)
+                        if hpMax == 0 { continue }
+                    
+                        let healthRatio = 1.0 - (Double(hp) / Double(hpMax))
+                        if healthRatio >= 0.75
+                        {
+                            cgContext.setStrokeColor(colors[2].cgColor)
+                        }
+                        else if healthRatio >= 0.5
+                        {
+                            cgContext.setStrokeColor(colors[1].cgColor)
+                        }
+                        else
+                        {
+                            cgContext.setStrokeColor(colors[0].cgColor)
+                        }
+                        cgContext.setLineWidth(overlayLineWidth * 2)
+                    
+                        if healthRatio == 0.0
+                        {
+                            let radius = frame.width/2
+                            cgContext.addArc(center: CGPoint(x: frame.minX + radius, y: frame.minY + radius), radius: radius - overlayLineWidth, startAngle: 0, endAngle: 2 * .pi, clockwise: true) 
+                        }
+                        else
+                        {
+                            let startAngle = 1.5 * .pi
+                            let endAngle = startAngle + (CGFloat(healthRatio) * 2.0 * .pi)
+                        
+                            let radius = frame.width/2
+                            cgContext.addArc(center: CGPoint(x: frame.minX + radius, y: frame.minY + radius), radius: radius - overlayLineWidth, startAngle: startAngle, endAngle: endAngle, clockwise: true)
+                        }
+                        cgContext.drawPath(using: .stroke)
+
+                    case .rectangularHP(let hpAddress, let hpMaxAddress, let hpBitInfo, let hpMaxBitInfo, let colors):
+                        let hp = tryDecryptValue(item: item, address: hpAddress, bitInfo: hpBitInfo)
+                        let hpMax = tryDecryptValue(item: item, address: hpMaxAddress, bitInfo: hpMaxBitInfo)
+                        if hpMax == 0 { continue }
+
+                        let healthRatio = (Double(hp) / Double(hpMax))
+                        if healthRatio <= 0.25
+                        {
+                            cgContext.setFillColor(colors[2].cgColor)
+                        }
+                        else if healthRatio <= 0.5
+                        {
+                            cgContext.setFillColor(colors[1].cgColor)
+                        }
+                        else
+                        {
+                            cgContext.setFillColor(colors[0].cgColor)
+                        }
+
+                        let healthWidth = frame.width * CGFloat(healthRatio)
+                        let healthFrame = CGRect(x: frame.minX, y: frame.minY, width: healthWidth, height: frame.height)
+
+                        cgContext.addRect(healthFrame)
+                        cgContext.drawPath(using: .fill)
+
+                    case .number(let address, let bitInfo, let font, let color):
+                        // Draw number as text
+                        let value = self.tryDecryptValue(item: item, address: address, bitInfo: bitInfo)
+                        let string = String(value)
+                        let attributes: [NSAttributedString.Key : Any] = [.font: font, .foregroundColor: color]
+                        let attributedString = NSAttributedString(string: string, attributes: attributes)
+                        
+                        // Render
+                        let line = CTLineCreateWithAttributedString(attributedString)
+                        let stringRect = CTLineGetImageBounds(line, cgContext)
+                        let textTransform = CGAffineTransform(scaleX: 1.0, y: -1.0).translatedBy(x: frame.minX + (frame.width/2) - (stringRect.width/2), y: -frame.minY - (frame.height/2) - (stringRect.height/2))
+                        cgContext.textMatrix = textTransform
+                        CTLineDraw(line, cgContext)
+
+                    case .indexedText(let address, let bitInfo, let font, let color, let strings):
+                        let value = self.tryDecryptValue(item: item, address: address, bitInfo: bitInfo)
+                        if value < 0 || value >= strings.count { continue }
+                        let string = strings[value]
+                        let attributes: [NSAttributedString.Key : Any] = [.font: font, .foregroundColor: color]
+                        let attributedString = NSAttributedString(string: string, attributes: attributes)
+
+                        // Render
+                        let line = CTLineCreateWithAttributedString(attributedString)
+                        let stringRect = CTLineGetImageBounds(line, cgContext)
+                        let textTransform = CGAffineTransform(scaleX: 1.0, y: -1.0).translatedBy(x: frame.minX + (frame.width/2) - (stringRect.width/2), y: -frame.minY - (frame.height/2) - (stringRect.height/2))
+                        cgContext.textMatrix = textTransform
+                        CTLineDraw(line, cgContext)
+                }
+            }
+        }
+        
+        self.buttonsView.updateLiveSkinOverlayView(overlayImage: overlayImage)
+    }
+
+    public func clearLiveSkinOverlay()
+    {
+        self.buttonsView.updateLiveSkinOverlayView(overlayImage: nil)
+    }
+
+    public func resetLiveSkinOverlay()
+    {
+        self.buttonsView.updateLiveSkinOverlayView(overlayImage: nil)
+        self.liveSkinImages.removeAll()
+        self.liveSkinImageSizes.removeAll()
+        self.liveSkinImageTiles.removeAllObjects()
+        self.liveSkinItems.removeAll()
     }
 }

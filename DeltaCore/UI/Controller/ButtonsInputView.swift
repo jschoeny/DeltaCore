@@ -51,6 +51,7 @@ class ButtonsInputView: UIView
     
     private let imageView = UIImageView(frame: .zero)
     private let touchOverlayView = UIImageView(frame: .zero)
+    private let liveSkinOverlayView = UIImageView(frame: .zero)
     private let feedbackGenerator: UIImpactFeedbackGenerator = UIImpactFeedbackGenerator(style: .rigid)
     
     private var touchInputsMappingDictionary: [UITouch: Set<AnyInput>] = [:]
@@ -78,6 +79,14 @@ class ButtonsInputView: UIView
                                      self.imageView.trailingAnchor.constraint(equalTo: self.trailingAnchor),
                                      self.imageView.topAnchor.constraint(equalTo: self.topAnchor),
                                      self.imageView.bottomAnchor.constraint(equalTo: self.bottomAnchor)])
+
+        self.liveSkinOverlayView.translatesAutoresizingMaskIntoConstraints = false
+        self.addSubview(self.liveSkinOverlayView)
+
+        NSLayoutConstraint.activate([self.liveSkinOverlayView.leadingAnchor.constraint(equalTo: self.leadingAnchor),
+                                     self.liveSkinOverlayView.trailingAnchor.constraint(equalTo: self.trailingAnchor),
+                                     self.liveSkinOverlayView.topAnchor.constraint(equalTo: self.topAnchor),
+                                     self.liveSkinOverlayView.bottomAnchor.constraint(equalTo: self.bottomAnchor)])
         
         self.touchOverlayView.translatesAutoresizingMaskIntoConstraints = false
         self.addSubview(self.touchOverlayView)
@@ -440,5 +449,13 @@ private extension ButtonsInputView
         }
         
         return (topRect, bottomRect, leftRect, rightRect)
+    }
+}
+
+extension ButtonsInputView
+{
+    public func updateLiveSkinOverlayView(overlayImage: UIImage?)
+    {
+        self.liveSkinOverlayView.image = overlayImage
     }
 }

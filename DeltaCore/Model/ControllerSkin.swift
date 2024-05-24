@@ -403,6 +403,58 @@ public extension ControllerSkin
         guard let representation = self.representation(for: traits, alt: alt) else { return nil }
         return representation.items
     }
+
+    func liveSkinItems(for traits: Traits, alt: Bool = false) -> [LiveSkinItem]?
+    {
+        guard let representation = self.representation(for: traits, alt: alt) else { return nil }
+        return representation.liveSkinItems
+    }
+
+    func liveSkinImage(for item: LiveSkinItem, traits: Traits, preferredSize: Size, alt: Bool = false) -> UIImage?
+    {
+        guard let representation = self.representation(for: traits, alt: alt) else { return nil }
+        guard case let .image(_, _, imageName, _) = item.data else { return nil }
+        guard let entry = self.archive[imageName] else { return nil }
+        
+        let cacheKey = imageName + self.cacheKey(for: traits, size: preferredSize, alt: alt)
+        
+        if let image = self.imageCache.object(forKey: cacheKey as NSString)
+        {
+            return image
+        }
+        
+        let liveSkinImage: UIImage?
+        
+        do
+        {
+            let data = try self.archive.extract(entry)
+            
+            switch (imageName as NSString).pathExtension.lowercased()
+            {
+            case "pdf":
+                let assetSize = AssetSize(size: preferredSize)
+                guard let targetSize = assetSize.targetSize(for: representation.traits) else { return nil }
+                
+                let imageSize = CGSize(width: targetSize.width, height: targetSize.height)
+                liveSkinImage = UIImage.image(withPDFData: data, targetSize: imageSize)
+                
+            default:
+                liveSkinImage = UIImage(data: data, scale: 1.0)
+            }
+        }
+        catch
+        {
+            print(error)
+            
+            return nil
+        }
+        
+        guard let image = liveSkinImage else { return nil }
+        
+        self.imageCache.setObject(image, forKey: cacheKey as NSString)
+        
+        return image
+    }
     
     func isTranslucent(for traits: Traits, alt: Bool = false) -> Bool?
     {
@@ -780,6 +832,443 @@ extension ControllerSkin.Item: Hashable
 
 extension ControllerSkin.Item: Identifiable {}
 
+extension UIColor
+{
+    public convenience init?(hexString: String)
+    {
+        let r, g, b, a: CGFloat
+
+        if hexString.hasPrefix("#")
+        {
+            let start = hexString.index(hexString.startIndex, offsetBy: 1)
+            let hexColor = String(hexString[start...])
+
+            if hexColor.count == 6
+            {
+                let scanner = Scanner(string: hexColor)
+                var hexNumber: UInt64 = 0
+
+                if scanner.scanHexInt64(&hexNumber)
+                {
+                    r = CGFloat((hexNumber & 0xff0000) >> 16) / 255
+                    g = CGFloat((hexNumber & 0x00ff00) >> 8) / 255
+                    b = CGFloat(hexNumber & 0x0000ff) / 255
+
+                    self.init(red: r, green: g, blue: b, alpha: 1)
+                    return
+                }
+            }
+            else if hexColor.count == 8
+            {
+                let scanner = Scanner(string: hexColor)
+                var hexNumber: UInt64 = 0
+
+                if scanner.scanHexInt64(&hexNumber)
+                {
+                    r = CGFloat((hexNumber & 0xff000000) >> 24) / 255
+                    g = CGFloat((hexNumber & 0x00ff0000) >> 16) / 255
+                    b = CGFloat((hexNumber & 0x0000ff00) >> 8) / 255
+                    a = CGFloat(hexNumber & 0x000000ff) / 255
+
+                    self.init(red: r, green: g, blue: b, alpha: a)
+                    return
+                }
+            }
+        }
+
+        return nil
+    }
+}
+
+extension String
+{
+    func hexToInt() -> Int?
+    {
+        if self.hasPrefix("0x")
+        {
+            return Int(self.dropFirst(2), radix: 16)
+        }
+        return Int(self, radix: 16)
+    }
+}
+
+// LiveSkins
+extension ControllerSkin
+{
+    public struct LiveSkinItem
+    {
+        public enum Address
+        {
+            case address(Int)
+            case pointer(Int, offset: Int)
+            
+            init?(rawValue: String)
+            {
+                if rawValue.hasPrefix("*")
+                {
+                    let components = rawValue.dropFirst().split(separator: "+")
+                    guard components.count == 2 else { return nil }
+                    
+                    guard let address = String(components[0]).hexToInt(), let offset = Int(components[1]) else { return nil }
+                    self = .pointer(address, offset: offset)
+                }
+                else
+                {
+                    guard let address = rawValue.hexToInt() else { return nil }
+                    self = .address(address)
+                
+                }
+            }
+        }
+
+        public struct BitInfo
+        {
+            public var width: Int
+            public var offset: Int
+
+            public init(width: Int, offset: Int = 0)
+            {
+                self.width = width
+                self.offset = offset
+            }
+        }
+
+        public enum Kind: String
+        {
+            case image
+            case circularHP
+            case rectangularHP
+            case number
+            case indexedText
+        }
+
+        public enum Data
+        {
+            case image(address: Address, bitInfo: BitInfo, filename: String, size: CGSize)
+            case circularHP(hpAddress: Address, hpMaxAddress: Address, hpBitInfo: BitInfo, hpMaxBitInfo: BitInfo, colors: [UIColor])
+            case rectangularHP(hpAddress: Address, hpMaxAddress: Address, hpBitInfo: BitInfo, hpMaxBitInfo: BitInfo, colors: [UIColor])
+            case number(address: Address, bitInfo: BitInfo, font: UIFont, color: UIColor)
+            case indexedText(address: Address, bitInfo: BitInfo, font: UIFont, color: UIColor, strings: [String])
+        }
+
+        public enum DecryptionMethod
+        {
+            case none
+            case xor(keyAddress: Address, keyBitInfo: BitInfo)
+            case gbaPokemonParty(monAddress: Address, personalityAddress: Address, otIdAddress: Address)
+        }
+        
+        public var id: String
+
+        public var kind: Kind
+        public var frame: CGRect
+        public var data: Data
+        public var decryptionMethod: DecryptionMethod = .none
+
+        public var placement: Placement = .controller
+
+        public init(id: String, kind: Kind, frame: CGRect, data: Data)
+        {
+            self.id = id
+            self.kind = kind
+            self.frame = frame
+            self.data = data
+        }
+
+        public init?(id: String, dictionary: [String: AnyObject], mappingSize: CGSize)
+        {
+            guard
+                let kindRawValue = dictionary["kind"] as? String,
+                let kind = Kind(rawValue: kindRawValue),
+                let frameDictionary = dictionary["frame"] as? [String: CGFloat],
+                let frame = CGRect(dictionary: frameDictionary),
+                let data = dictionary["data"] as? [String: AnyObject]
+            else { return nil }
+            
+            self.id = id
+            self.kind = kind
+            self.frame = frame
+
+            if let decryptionMethod = dictionary["decryptionMethod"] as? [String: AnyObject]
+            {
+                if let rawMethod = decryptionMethod["method"] as? String
+                {
+                    switch rawMethod
+                    {
+                    case "xor":
+                        guard
+                            let keyAddressString = decryptionMethod["keyAddress"] as? String,
+                            let keyAddress = Address(rawValue: keyAddressString),
+                            let keyBitWidth = decryptionMethod["keyBitWidth"] as? Int
+                        else { return nil }
+                        
+                        let keyBitOffset = decryptionMethod["keyBitOffset"] as? Int ?? 0
+                        let keyBitInfo = BitInfo(width: keyBitWidth, offset: keyBitOffset)
+                        
+                        self.decryptionMethod = .xor(keyAddress: keyAddress, keyBitInfo: keyBitInfo)
+
+                    case "gbaPokemonParty":
+                        guard
+                            let monAddressString = decryptionMethod["monAddress"] as? String,
+                            let monAddress = Address(rawValue: monAddressString),
+                            let personalityAddressString = decryptionMethod["personalityAddress"] as? String,
+                            let personalityAddress = Address(rawValue: personalityAddressString),
+                            let otIdAddressString = decryptionMethod["otIdAddress"] as? String,
+                            let otIdAddress = Address(rawValue: otIdAddressString)
+                        else { return nil }
+
+                        self.decryptionMethod = .gbaPokemonParty(monAddress: monAddress, personalityAddress: personalityAddress, otIdAddress: otIdAddress)
+
+                    default:
+                        self.decryptionMethod = .none
+                    }
+                }
+            }
+
+            switch kind
+            {
+            case .image:
+                guard
+                    let addressString = data["address"] as? String,
+                    let address = Address(rawValue: addressString),
+                    let bitWidth = data["bitWidth"] as? Int,
+                    let filename = data["filename"] as? String,
+                    let sizeDictionary = data["size"] as? [String: CGFloat],
+                    let size = CGSize(dictionary: sizeDictionary)
+                else { return nil }
+                
+                let bitOffset = data["bitOffset"] as? Int ?? 0
+                let bitInfo = BitInfo(width: bitWidth, offset: bitOffset)
+
+                self.data = .image(address: address, bitInfo: bitInfo, filename: filename, size: size)
+
+            case .circularHP:
+                guard
+                    let hpAddressString = data["hpAddress"] as? String,
+                    let hpAddress = Address(rawValue: hpAddressString),
+                    let hpMaxAddressString = data["hpMaxAddress"] as? String,
+                    let hpMaxAddress = Address(rawValue: hpMaxAddressString),
+                    let bitWidth = data["bitWidth"] as? Int,
+                    let colors = data["colors"] as? [String: String]
+                else { return nil }
+                
+                let hpBitOffset = data["hpBitOffset"] as? Int ?? 0
+                let hpBitInfo = BitInfo(width: bitWidth, offset: hpBitOffset)
+                let hpMaxBitOffset = data["hpMaxBitOffset"] as? Int ?? 0
+                let hpMaxBitInfo = BitInfo(width: bitWidth, offset: hpMaxBitOffset)
+
+                // Verify colors contains all 3 keys: 'full', 'half', 'quarter'
+                guard colors.keys.contains("full") && colors.keys.contains("half") && colors.keys.contains("quarter") else { return nil }
+                let processedColors: [UIColor] = [
+                    UIColor(hexString: colors["full"] ?? "#00FF00") ?? UIColor.systemGreen,
+                    UIColor(hexString: colors["half"] ?? "#FFFF00") ?? UIColor.systemYellow,
+                    UIColor(hexString: colors["quarter"] ?? "#FF0000") ?? UIColor.systemRed
+                ]
+
+                self.data = .circularHP(hpAddress: hpAddress, hpMaxAddress: hpMaxAddress, hpBitInfo: hpBitInfo, hpMaxBitInfo: hpMaxBitInfo, colors: processedColors)
+
+            case .rectangularHP:
+                guard
+                    let hpAddressString = data["hpAddress"] as? String,
+                    let hpAddress = Address(rawValue: hpAddressString),
+                    let hpMaxAddressString = data["hpMaxAddress"] as? String,
+                    let hpMaxAddress = Address(rawValue: hpMaxAddressString),
+                    let bitWidth = data["bitWidth"] as? Int,
+                    let colors = data["colors"] as? [String: String]
+                else { return nil }
+                
+                let hpBitOffset = data["hpBitOffset"] as? Int ?? 0
+                let hpBitInfo = BitInfo(width: bitWidth, offset: hpBitOffset)
+                let hpMaxBitOffset = data["hpMaxBitOffset"] as? Int ?? 0
+                let hpMaxBitInfo = BitInfo(width: bitWidth, offset: hpMaxBitOffset)
+
+                // Verify colors contains all 3 keys: 'full', 'half', 'quarter'
+                guard colors.keys.contains("full") && colors.keys.contains("half") && colors.keys.contains("quarter") else { return nil }
+                let processedColors: [UIColor] = [
+                    UIColor(hexString: colors["full"] ?? "#00FF00") ?? UIColor.systemGreen,
+                    UIColor(hexString: colors["half"] ?? "#FFFF00") ?? UIColor.systemYellow,
+                    UIColor(hexString: colors["quarter"] ?? "#FF0000") ?? UIColor.systemRed
+                ]
+                
+                self.data = .rectangularHP(hpAddress: hpAddress, hpMaxAddress: hpMaxAddress, hpBitInfo: hpBitInfo, hpMaxBitInfo: hpMaxBitInfo, colors: processedColors)
+
+            case .number:
+                guard
+                    let addressString = data["address"] as? String,
+                    let address = Address(rawValue: addressString),
+                    let bitWidth = data["bitWidth"] as? Int,
+                    let fontSize = data["fontSize"] as? CGFloat,
+                    let colorString = data["color"] as? String,
+                    let color = UIColor(hexString: colorString)
+                else { return nil }
+                
+                let bitOffset = data["bitOffset"] as? Int ?? 0
+                let bitInfo = BitInfo(width: bitWidth, offset: bitOffset)
+
+                var font: UIFont
+                if let fontName = data["fontName"] as? String
+                {
+                    font = UIFont(name: fontName, size: fontSize) ?? UIFont.systemFont(ofSize: fontSize)
+                }
+                else
+                {
+                    font = UIFont.systemFont(ofSize: fontSize)
+                }
+
+                self.data = .number(address: address, bitInfo: bitInfo, font: font, color: color)
+
+            case .indexedText:
+                guard
+                    let addressString = data["address"] as? String,
+                    let address = Address(rawValue: addressString),
+                    let bitWidth = data["bitWidth"] as? Int,
+                    let fontName = data["fontName"] as? String,
+                    let fontSize = data["fontSize"] as? CGFloat,
+                    let colorString = data["color"] as? String,
+                    let color = UIColor(hexString: colorString),
+                    let strings = data["text"] as? [String]
+                else { return nil }
+                
+                let bitOffset = data["bitOffset"] as? Int ?? 0
+                let bitInfo = BitInfo(width: bitWidth, offset: bitOffset)
+
+                let font = UIFont(name: fontName, size: fontSize) ?? UIFont.systemFont(ofSize: fontSize)
+                self.data = .indexedText(address: address, bitInfo: bitInfo, font: font, color: color, strings: strings)
+            }
+
+            if let rawPlacement = dictionary["placement"] as? String, let placement = Placement(rawValue: rawPlacement)
+            {
+                self.placement = placement
+            }
+            
+            switch self.placement
+            {
+            case .controller:
+                // Convert frames to relative values.
+                let scaleTransform = CGAffineTransform(scaleX: 1.0 / mappingSize.width, y: 1.0 / mappingSize.height)
+                self.frame = frame.applying(scaleTransform)
+                
+            case .app:
+                // `app` placement already uses relative values.
+                self.frame = frame
+            }
+        }
+    }
+}
+
+extension ControllerSkin.LiveSkinItem.Address: Hashable
+{
+    public static func ==(lhs: ControllerSkin.LiveSkinItem.Address, rhs: ControllerSkin.LiveSkinItem.Address) -> Bool
+    {
+        switch (lhs, rhs)
+        {
+        case let (.address(lhsAddress), .address(rhsAddress)):
+            return lhsAddress == rhsAddress
+
+        case let (.pointer(lhsAddress, lhsOffset), .pointer(rhsAddress, rhsOffset)):
+            return lhsAddress == rhsAddress && lhsOffset == rhsOffset
+
+        default:
+            return false
+        }
+    }
+}
+
+extension ControllerSkin.LiveSkinItem.BitInfo: Hashable
+{
+    public static func ==(lhs: ControllerSkin.LiveSkinItem.BitInfo, rhs: ControllerSkin.LiveSkinItem.BitInfo) -> Bool
+    {
+        return lhs.width == rhs.width && lhs.offset == rhs.offset
+    }
+
+    public func hash(into hasher: inout Hasher)
+    {
+        hasher.combine(self.width)
+        hasher.combine(self.offset)
+    }
+
+}
+
+extension ControllerSkin.LiveSkinItem: Hashable
+{
+    public static func ==(lhs: ControllerSkin.LiveSkinItem, rhs: ControllerSkin.LiveSkinItem) -> Bool
+    {
+        guard
+            lhs.kind == rhs.kind,
+            lhs.frame == rhs.frame
+        else { return false }
+
+        switch (lhs.data, rhs.data)
+        {
+        case let (.image(lhsAddress, lhsBitWidth, lhsFilename, lhsSize), .image(rhsAddress, rhsBitWidth, rhsFilename, rhsSize)):
+            return lhsAddress == rhsAddress && lhsBitWidth == rhsBitWidth && lhsFilename == rhsFilename && lhsSize == rhsSize
+
+        case let (.circularHP(lhsHPAddress, lhsHPMaxAddress, lhsHPBitInfo, lhsHPMaxBitInfo, lhsColors), .circularHP(rhsHPAddress, rhsHPMaxAddress, rhsHPBitInfo, rhsHPMaxBitInfo, rhsColors)):
+            return lhsHPAddress == rhsHPAddress && lhsHPMaxAddress == rhsHPMaxAddress && lhsHPBitInfo == rhsHPBitInfo && lhsHPMaxBitInfo == rhsHPMaxBitInfo && lhsColors == rhsColors
+
+        case let (.rectangularHP(lhsHPAddress, lhsHPMaxAddress, lhsHPBitInfo, lhsHPMaxBitInfo, lhsColors), .rectangularHP(rhsHPAddress, rhsHPMaxAddress, rhsHPBitInfo, rhsHPMaxBitInfo, rhsColors)):
+            return lhsHPAddress == rhsHPAddress && lhsHPMaxAddress == rhsHPMaxAddress && lhsHPBitInfo == rhsHPBitInfo && lhsHPMaxBitInfo == rhsHPMaxBitInfo && lhsColors == rhsColors
+
+        case let (.number(lhsAddress, lhsBitWidth, lhsFont, lhsColor), .number(rhsAddress, rhsBitWidth, rhsFont, rhsColor)):
+            return lhsAddress == rhsAddress && lhsBitWidth == rhsBitWidth && lhsFont == rhsFont && lhsColor == rhsColor
+
+        case let (.indexedText(lhsAddress, lhsBitWidth, lhsFont, lhsColor, lhsText), .indexedText(rhsAddress, rhsBitWidth, rhsFont, rhsColor, rhsText)):
+            return lhsAddress == rhsAddress && lhsBitWidth == rhsBitWidth && lhsFont == rhsFont && lhsColor == rhsColor && lhsText == rhsText
+
+        default:
+            return false
+        }
+    }
+
+    public func hash(into hasher: inout Hasher)
+    {
+        hasher.combine(self.kind)
+        hasher.combine(self.frame.origin.x)
+        hasher.combine(self.frame.origin.y)
+        hasher.combine(self.frame.width)
+        hasher.combine(self.frame.height)
+
+        switch self.data
+        {
+        case let .image(address, bitInfo, filename, size):
+            hasher.combine(address)
+            hasher.combine(bitInfo)
+            hasher.combine(filename)
+            hasher.combine(size.width)
+            hasher.combine(size.height)
+
+        case let .circularHP(hpAddress, hpMaxAddress, hpBitInfo, hpMaxBitInfo, colors):
+            hasher.combine(hpAddress)
+            hasher.combine(hpMaxAddress)
+            hasher.combine(hpBitInfo)
+            hasher.combine(hpMaxBitInfo)
+            hasher.combine(colors)
+
+        case let .rectangularHP(hpAddress, hpMaxAddress, hpBitInfo, hpMaxBitInfo, colors):
+            hasher.combine(hpAddress)
+            hasher.combine(hpMaxAddress)
+            hasher.combine(hpBitInfo)
+            hasher.combine(hpMaxBitInfo)
+            hasher.combine(colors)
+
+        case let .number(address, bitInfo, font, color):
+            hasher.combine(address)
+            hasher.combine(bitInfo)
+            hasher.combine(font)
+            hasher.combine(color)
+
+        case let .indexedText(address, bitInfo, font, color, strings):
+            hasher.combine(address)
+            hasher.combine(bitInfo)
+            hasher.combine(font)
+            hasher.combine(color)
+            hasher.combine(strings)
+        }
+    }
+}
+
+extension ControllerSkin.LiveSkinItem: Identifiable {}
+
 private extension ControllerSkin
 {
     static func itemID(forSkinID skinID: String, traits: ControllerSkin.Traits, index: Int) -> String
@@ -951,6 +1440,7 @@ private extension ControllerSkin
         let aspectRatio: CGSize
         
         let items: [Item]
+        let liveSkinItems: [LiveSkinItem]?
         
         /// CustomStringConvertible
         var description: String {
@@ -995,6 +1485,20 @@ private extension ControllerSkin
                 }
             }
             self.items = items
+            
+            var liveSkinItems = [LiveSkinItem]()
+            if let liveSkinsArray = dictionary["liveSkin"] as? [[String: AnyObject]]
+            {
+                for (index, dictionary) in zip(0..., liveSkinsArray)
+                {
+                    let id = ControllerSkin.itemID(forSkinID: skinID, traits: traits, index: index + items.count)
+                    if let item = LiveSkinItem(id: id, dictionary: dictionary, mappingSize: mappingSize)
+                    {
+                        liveSkinItems.append(item)
+                    }
+                }
+            }
+            self.liveSkinItems = liveSkinItems
             
             var assets = [AssetSize: String]()
             for (key, value) in assetsDictionary

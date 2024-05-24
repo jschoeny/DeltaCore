@@ -144,6 +144,8 @@ open class GameViewController: UIViewController, GameControllerReceiver
     private var isEnteringForeground: Bool = false
     private weak var delayCheckKeyboardFocusTimer: Timer?
     
+    private var liveSkinTimer: Timer?
+    
     /// UIViewController
     open override var prefersStatusBarHidden: Bool {
         return true
@@ -609,6 +611,22 @@ private extension GameViewController
         emulatorCore.audioManager.isEnabled = false
         emulatorCore.audioManager.isEnabled = true
         
+        if emulatorCore.deltaCore.isLiveSkinSupported
+        {
+            DispatchQueue.main.async {
+                self.emulatorCore?.deltaCore.emulatorBridge.resetLiveSkin?()
+                self.liveSkinTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { timer in
+                    self.controllerView.updateLiveSkinOverlay()
+                }
+            }
+        }
+        else
+        {
+            self.controllerView.resetLiveSkinOverlay()
+            self.liveSkinTimer?.invalidate()
+            self.liveSkinTimer = nil
+        }
+        
         return self._resumeEmulation()
     }
     
@@ -616,6 +634,12 @@ private extension GameViewController
     {
         guard let emulatorCore = self.emulatorCore, self.delegate?.gameViewControllerShouldPauseEmulation(self) ?? true else { return false }
         
+        DispatchQueue.main.async {
+            self.controllerView.clearLiveSkinOverlay()
+        }
+        self.liveSkinTimer?.invalidate()
+        self.liveSkinTimer = nil
+
         let result = emulatorCore.pause()
         return result
     }
@@ -628,6 +652,13 @@ private extension GameViewController
             if self.view.window != nil
             {
                 self.controllerView.becomeFirstResponder()
+            }
+
+            if self.liveSkinTimer == nil, emulatorCore.deltaCore.isLiveSkinSupported
+            {
+                self.liveSkinTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { timer in
+                    self.controllerView.updateLiveSkinOverlay()
+                }
             }
         }
         
@@ -665,6 +696,8 @@ private extension GameViewController
         
         controllerView.addReceiver(self)
         controllerView.addReceiver(emulatorCore)
+        
+        controllerView.emulatorCore = emulatorCore
         
         let controllerSkin = ControllerSkin.standardControllerSkin(for: game.type)
         controllerView.controllerSkin = controllerSkin
