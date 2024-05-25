@@ -54,7 +54,7 @@ public class VideoManager: NSObject, VideoRendering
     
     public var isEnabled = true
     
-    public var renderingAPI: EAGLRenderingAPI = .openGLES2 {
+    public var renderingAPI: EAGLRenderingAPI = .openGLES3 {
         didSet {
             self.updateProcessor()
         }

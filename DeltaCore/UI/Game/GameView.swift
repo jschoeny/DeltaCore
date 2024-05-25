@@ -78,7 +78,7 @@ public class GameView: UIView
         }
     }
     
-    public var renderingAPI: EAGLRenderingAPI = .openGLES2
+    public var renderingAPI: EAGLRenderingAPI = .openGLES3
     
     public var outputImage: CIImage? {
         guard let inputImage = self.inputImage else { return nil }
