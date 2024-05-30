@@ -106,7 +106,6 @@ public struct ControllerSkin: ControllerSkinProtocol
             guard
                 let name = info["name"] as? String,
                 let identifier = info["identifier"] as? String,
-                let isDebugModeEnabled = info["debug"] as? Bool,
                 let representationsDictionary = info["representations"] as? RepresentationDictionary
             else { return nil }
             
@@ -117,10 +116,12 @@ public struct ControllerSkin: ControllerSkinProtocol
             let gameType = GameType(gameTypeString)
             #endif
             
+            let isDebugModeEnabled = info["debug"] as? Bool
+            
             self.name = fileURL.pathExtension == "deltaskin" ? name + " (Delta Skin)" : name
             self.identifier = fileURL.pathExtension == "deltaskin" ? identifier + ".delta" : identifier
             self.gameType = gameType
-            self.isDebugModeEnabled = isDebugModeEnabled
+            self.isDebugModeEnabled = isDebugModeEnabled ?? false
             
             let representationsSet = ControllerSkin.parsedRepresentations(from: representationsDictionary, skinID: identifier)
             
