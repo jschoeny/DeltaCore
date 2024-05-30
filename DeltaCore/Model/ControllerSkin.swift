@@ -106,21 +106,15 @@ public struct ControllerSkin: ControllerSkinProtocol
             guard
                 let name = info["name"] as? String,
                 let identifier = info["identifier"] as? String,
+                let gameTypeString = info["gameTypeIdentifier"] as? String,
                 let representationsDictionary = info["representations"] as? RepresentationDictionary
             else { return nil }
-            
-            #if FRAMEWORK || SWIFT_PACKAGE
-            guard let gameType = info["gameTypeIdentifier"] as? GameType else { return nil }
-            #else
-            guard let gameTypeString = info["gameTypeIdentifier"] as? String else { return nil }
-            let gameType = GameType(gameTypeString.replacingOccurrences(of: "rileytestut.delta", with: "litritt.ignited"))
-            #endif
             
             let isDebugModeEnabled = info["debug"] as? Bool
             
             self.name = fileURL.pathExtension == "deltaskin" ? name + " (Delta Skin)" : name
             self.identifier = fileURL.pathExtension == "deltaskin" ? identifier + ".delta" : identifier
-            self.gameType = gameType
+            self.gameType = GameType(gameTypeString.replacingOccurrences(of: "rileytestut.delta", with: "litritt.ignited"))
             self.isDebugModeEnabled = isDebugModeEnabled ?? false
             
             let representationsSet = ControllerSkin.parsedRepresentations(from: representationsDictionary, skinID: identifier)
