@@ -113,7 +113,7 @@ public struct ControllerSkin: ControllerSkinProtocol
             guard let gameType = info["gameTypeIdentifier"] as? GameType else { return nil }
             #else
             guard let gameTypeString = info["gameTypeIdentifier"] as? String else { return nil }
-            let gameType = GameType(gameTypeString)
+            let gameType = GameType(gameTypeString.replacingOccurrences(of: "rileytestut.delta", with: "litritt.ignited"))
             #endif
             
             let isDebugModeEnabled = info["debug"] as? Bool
