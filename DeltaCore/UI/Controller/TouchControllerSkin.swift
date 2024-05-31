@@ -80,7 +80,7 @@ extension TouchControllerSkin: ControllerSkinProtocol
         return nil
     }
 
-    public func liveSkinImage(for item: ControllerSkin.LiveSkinItem, traits: ControllerSkin.Traits, preferredSize: ControllerSkin.Size, alt: Bool = false) -> UIImage?
+    public func liveSkinImage(for item: ControllerSkin.LiveSkinItem, traits: ControllerSkin.Traits, preferredSize: ControllerSkin.Size, alt: Bool = false, index: Int = 0) -> UIImage?
     {
         return nil
     }

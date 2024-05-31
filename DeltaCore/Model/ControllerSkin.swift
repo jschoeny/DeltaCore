@@ -405,11 +405,20 @@ public extension ControllerSkin
         return representation.liveSkinItems
     }
 
-    func liveSkinImage(for item: LiveSkinItem, traits: Traits, preferredSize: Size, alt: Bool = false) -> UIImage?
+    func liveSkinImage(for item: LiveSkinItem, traits: Traits, preferredSize: Size, alt: Bool = false, index: Int = 0) -> UIImage?
     {
         guard let representation = self.representation(for: traits, alt: alt) else { return nil }
-        guard case let .image(_, _, imageName, _) = item.data else { return nil }
-        guard let entry = self.archive[imageName] else { return nil }
+        let filename: String?
+        switch item.data
+        {
+            case .image(_, _, let imageName, _):
+                filename = imageName
+            case .battery(let filenames):
+                filename = filenames[index]
+            default:
+                return nil
+        }
+        guard let imageName = filename, let entry = self.archive[imageName] else { return nil }
         
         let cacheKey = imageName + self.cacheKey(for: traits, size: preferredSize, alt: alt)
         
@@ -935,6 +944,7 @@ extension ControllerSkin
             case rectangularHP
             case number
             case indexedText
+            case battery
         }
 
         public enum Data
@@ -944,6 +954,7 @@ extension ControllerSkin
             case rectangularHP(hpAddress: Address, hpMaxAddress: Address, hpBitInfo: BitInfo, hpMaxBitInfo: BitInfo, colors: [UIColor])
             case number(address: Address, bitInfo: BitInfo, font: UIFont, color: UIColor)
             case indexedText(address: Address, bitInfo: BitInfo, font: UIFont, color: UIColor, strings: [String])
+            case battery(filenames: [String])
         }
 
         public enum DecryptionMethod
@@ -1129,6 +1140,18 @@ extension ControllerSkin
 
                 let font = UIFont(name: fontName, size: fontSize) ?? UIFont.systemFont(ofSize: fontSize)
                 self.data = .indexedText(address: address, bitInfo: bitInfo, font: font, color: color, strings: strings)
+            
+            case .battery:
+                // Required fields { "unplugged", "unplugged-low", "charging", "charging-low" } as filenames
+                guard
+                    let unplugged = data["unplugged"] as? String,
+                    let unpluggedLow = data["unplugged-low"] as? String,
+                    let charging = data["charging"] as? String,
+                    let chargingLow = data["charging-low"] as? String
+                else { return nil }
+                
+                let filenames = [unplugged, unpluggedLow, charging, chargingLow]
+                self.data = .battery(filenames: filenames)
             }
 
             if let rawPlacement = dictionary["placement"] as? String, let placement = Placement(rawValue: rawPlacement)
@@ -1258,6 +1281,9 @@ extension ControllerSkin.LiveSkinItem: Hashable
             hasher.combine(font)
             hasher.combine(color)
             hasher.combine(strings)
+            
+        case let .battery(filenames):
+            hasher.combine(filenames)
         }
     }
 }

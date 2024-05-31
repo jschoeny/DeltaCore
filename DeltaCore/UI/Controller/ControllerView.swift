@@ -179,6 +179,29 @@ public class ControllerView: UIView, GameController
             self._emulatorCore = newValue
         }
     }
+
+    public var isLiveSkinBatteryUsed: Bool {
+        get {
+            return self._isLiveSkinBatteryUsed
+        }
+        set {
+            self._isLiveSkinBatteryUsed = newValue
+        }
+    }
+
+    public var liveSkinBatteryLevel: Double {
+        get {
+            guard let level = self._liveSkinBatteryLevel else {
+                let newLevel = Double(UIDevice.current.batteryLevel)
+                self._liveSkinBatteryLevel = newLevel
+                return newLevel
+            }
+            return level
+        }
+        set {
+            self._liveSkinBatteryLevel = newValue
+        }
+    }
     
     private var liveSkinImages: [String: UIImage] = [:]
     private var liveSkinImageSizes: [String: CGSize] = [:]
@@ -243,6 +266,8 @@ public class ControllerView: UIView, GameController
     private var _showDebugMode = false
     private var _isCurrentSkinTranslucent = false
     private var _useBackgroundBlur: Bool? = nil
+    private var _isLiveSkinBatteryUsed = false
+    private var _liveSkinBatteryLevel: Double? = nil
     
     private var controllerInputView: ControllerInputView?
     
@@ -1018,7 +1043,7 @@ extension ControllerView
                 switch item.data
                 {
                     case .image(let address, let bitInfo, let filename, let size):
-                        if let image = controllerSkin.liveSkinImage(for: item, traits: traits, preferredSize: self.controllerSkinSize, alt: self._useAltRepresentations)
+                        if let image = controllerSkin.liveSkinImage(for: item, traits: traits, preferredSize: self.controllerSkinSize, alt: self._useAltRepresentations, index: 0)
                         {
                             self.tryAddLiveSkinImage(image: image, for: filename, with: size)
                             setLiveSkinAddress(address, with: bitInfo)
@@ -1033,6 +1058,15 @@ extension ControllerView
                         setLiveSkinAddress(address, with: bitInfo)
                     case .indexedText(let address, let bitInfo, _, _, _):
                         setLiveSkinAddress(address, with: bitInfo)
+                    case .battery(let filenames):
+                        for (i, filename) in filenames.enumerated()
+                        {
+                            if let image = controllerSkin.liveSkinImage(for: item, traits: traits, preferredSize: self.controllerSkinSize, alt: self._useAltRepresentations, index: i)
+                            {
+                                self.tryAddLiveSkinImage(image: image, for: filename, with: image.size)
+                            }
+                        }
+                        self._isLiveSkinBatteryUsed = true
                 }
             }
             self.liveSkinItems[cacheKey] = items
@@ -1151,6 +1185,8 @@ extension ControllerView
     {
         guard let image = self.liveSkinImages[key] else { return nil }
         guard let size = self.liveSkinImageSizes[key] else { return nil }
+
+        if size == image.size { return image }
         
         guard let cache = self.liveSkinImageTiles.object(forKey: key as NSString) else {
             // Create a new cache and extract the image
@@ -1335,6 +1371,22 @@ extension ControllerView
                         let textTransform = CGAffineTransform(scaleX: 1.0, y: -1.0).translatedBy(x: frame.minX + (frame.width/2) - (stringRect.width/2), y: -frame.minY - (frame.height/2) - (stringRect.height/2))
                         cgContext.textMatrix = textTransform
                         CTLineDraw(line, cgContext)
+
+                    case .battery(let filenames):
+                        let batteryLevel = self.liveSkinBatteryLevel
+                        if batteryLevel == -1 { continue }
+                        
+                        let lowBattery = batteryLevel < 0.25
+                        let charging = UIDevice.current.batteryState == .charging || UIDevice.current.batteryState == .full
+                        // Options: { "unplugged" = 0, "unplugged-low" = 1, "charging" = 2, "charging-low" = 3 }
+                        let value = charging ? (lowBattery ? 3 : 2) : (lowBattery ? 1 : 0)
+                        if value < 0 { continue }
+                        
+                        let filename = filenames[value]
+                        if let image = self.getLiveSkinImage(for: filename, with: 0)
+                        {
+                            image.draw(in: frame)
+                        }
                 }
             }
         }
