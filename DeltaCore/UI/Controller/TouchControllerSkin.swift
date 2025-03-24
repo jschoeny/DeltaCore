@@ -25,6 +25,8 @@ public struct TouchControllerSkin
     public var gameType: GameType { self.controllerSkin.gameType }
     public var isDebugModeEnabled: Bool { false }
     public var hasAltRepresentations: Bool { false }
+    public var gameIdentifier: String? { nil }
+    public var gameName: String? { nil }
     
     public var screenLayoutAxis: LayoutAxis = .vertical
     public var screenPredicate: ((ControllerSkin.Screen) -> Bool)?
@@ -73,6 +75,11 @@ extension TouchControllerSkin: ControllerSkinProtocol
         touchScreenItem.frame = outputFrame
         touchScreenItem.extendedFrame = outputFrame
         return [touchScreenItem]
+    }
+
+    public func hasLiveSkin(for traits: ControllerSkin.Traits) -> Bool
+    {
+        return false
     }
 
     public func liveSkinItems(for traits: ControllerSkin.Traits, alt: Bool = false) -> [ControllerSkin.LiveSkinItem]?

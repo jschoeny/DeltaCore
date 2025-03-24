@@ -82,6 +82,8 @@ open class GameViewController: UIViewController, GameControllerReceiver
             self.prepareForGame()
         }
     }
+
+    open private(set) var liveSkinEnabled: Bool = false
     
     open weak var delegate: GameViewControllerDelegate?
     
@@ -611,7 +613,7 @@ private extension GameViewController
         emulatorCore.audioManager.isEnabled = false
         emulatorCore.audioManager.isEnabled = true
         
-        if emulatorCore.deltaCore.isLiveSkinSupported
+        if emulatorCore.deltaCore.isLiveSkinSupported, self.liveSkinEnabled
         {
             DispatchQueue.main.async {
                 self.emulatorCore?.deltaCore.emulatorBridge.resetLiveSkin?()
@@ -654,7 +656,7 @@ private extension GameViewController
                 self.controllerView.becomeFirstResponder()
             }
 
-            if self.liveSkinTimer == nil, emulatorCore.deltaCore.isLiveSkinSupported
+            if self.liveSkinTimer == nil, emulatorCore.deltaCore.isLiveSkinSupported, self.liveSkinEnabled
             {
                 self.liveSkinTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { timer in
                     self.controllerView.updateLiveSkinOverlay()

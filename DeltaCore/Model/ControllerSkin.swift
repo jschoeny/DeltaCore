@@ -79,6 +79,8 @@ public struct ControllerSkin: ControllerSkinProtocol
     public let gameType: GameType
     public let isDebugModeEnabled: Bool
     public let hasAltRepresentations: Bool
+    public let gameIdentifier: String?
+    public let gameName: String?
     
     public let fileURL: URL
     
@@ -116,6 +118,19 @@ public struct ControllerSkin: ControllerSkinProtocol
             self.identifier = fileURL.pathExtension == "deltaskin" ? identifier + ".delta" : identifier
             self.gameType = GameType(gameTypeString.replacingOccurrences(of: "rileytestut.delta", with: "litritt.ignited"))
             self.isDebugModeEnabled = isDebugModeEnabled ?? false
+
+            if let gameIdentifier = info["gameIdentifier"] as? String
+            {
+                // If gameIdentifier is present, gameName should also be present
+                guard let gameName = info["gameName"] as? String else { return nil }
+                self.gameIdentifier = gameIdentifier
+                self.gameName = gameName
+            }
+            else
+            {
+                self.gameIdentifier = nil
+                self.gameName = nil
+            }
             
             let representationsSet = ControllerSkin.parsedRepresentations(from: representationsDictionary, skinID: identifier)
             
@@ -397,6 +412,12 @@ public extension ControllerSkin
     {
         guard let representation = self.representation(for: traits, alt: alt) else { return nil }
         return representation.items
+    }
+
+    func hasLiveSkin(for traits: Traits) -> Bool
+    {
+        // Has at least one LiveSkin item
+        return ((self.liveSkinItems(for: traits, alt: false)?.count ?? 0) + (self.liveSkinItems(for: traits, alt: true)?.count ?? 0)) > 0
     }
 
     func liveSkinItems(for traits: Traits, alt: Bool = false) -> [LiveSkinItem]?

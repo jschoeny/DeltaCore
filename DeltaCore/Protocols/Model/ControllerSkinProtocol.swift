@@ -15,6 +15,8 @@ public protocol ControllerSkinProtocol
     var gameType: GameType { get }
     var isDebugModeEnabled: Bool { get }
     var hasAltRepresentations: Bool { get }
+    var gameIdentifier: String? { get }
+    var gameName: String? { get }
     
     func supports(_ traits: ControllerSkin.Traits, alt: Bool) -> Bool
     
@@ -24,6 +26,7 @@ public protocol ControllerSkinProtocol
     
     func items(for traits: ControllerSkin.Traits, alt: Bool) -> [ControllerSkin.Item]?
     
+    func hasLiveSkin(for traits: ControllerSkin.Traits) -> Bool
     func liveSkinItems(for traits: ControllerSkin.Traits, alt: Bool) -> [ControllerSkin.LiveSkinItem]?
     func liveSkinImage(for item: ControllerSkin.LiveSkinItem, traits: ControllerSkin.Traits, preferredSize: ControllerSkin.Size, alt: Bool, index: Int) -> UIImage?
     
